@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+env/
+
+# Generated model artifacts
+*.pkl
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
