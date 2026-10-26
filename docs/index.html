@@ -1,406 +1,914 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MediPredict ML - Heart Disease Prediction System</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-  <style>
-    body { font-family: 'Plus Jakarta Sans', sans-serif; }
-    code, pre { font-family: 'JetBrains Mono', monospace; }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MediPredict ML — Cardiovascular Risk Decision Support</title>
+<link rel="stylesheet" href="tailwind.css" />
+<style>
+  :root { color-scheme: dark; }
+  body { font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+  .mono, code, pre { font-family: ui-monospace, 'JetBrains Mono', Menlo, monospace; }
+  .slider { -webkit-appearance: none; appearance: none; height: 6px; border-radius: 999px;
+            background: linear-gradient(90deg, #6366f1, #a855f7); outline: none; }
+  .slider::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%;
+            background: #e2e8f0; border: 3px solid #6366f1; cursor: pointer; box-shadow: 0 0 0 4px rgba(99,102,241,.18); }
+  .slider::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: #e2e8f0; border: 3px solid #6366f1; cursor: pointer; }
+  summary::-webkit-details-marker { display: none; }
+  .tabbtn.active { background: rgba(99,102,241,.16); color: #c7d2fe; border-color: rgba(129,140,248,.45); }
+  pre.code { max-height: 62vh; overflow: auto; }
+  ::-webkit-scrollbar { width: 9px; height: 9px; }
+  ::-webkit-scrollbar-thumb { background: #334155; border-radius: 9px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+</style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen antialiased selection:bg-indigo-500 selection:text-white">
+<body class="bg-[#060a14] text-slate-200 min-h-screen antialiased">
 
-  <!-- Top Header Navigation -->
-  <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-50">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-      <div class="flex items-center space-x-3">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-rose-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-rose-500/20 text-white font-bold text-xl">
-          ♥
-        </div>
-        <div>
-          <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
-            MediPredict ML
-            <span class="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">Static &middot; In-Browser ML</span>
-          </h1>
-          <p class="text-xs text-slate-400">College Mini Project &bull; Kaggle Heart Disease Dataset &bull; Scikit-Learn &bull; GitHub Pages</p>
-        </div>
-      </div>
-      <div class="flex items-center space-x-3 text-xs">
-        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-300">
-          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span id="modelStatus">Model: Random Forest (.json)</span>
-        </span>
+<!-- ============ NAV ============ -->
+<header class="sticky top-0 z-40 border-b border-slate-800/80 bg-[#060a14]/95 backdrop-blur">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6">
+    <div class="flex items-center gap-2 py-3 overflow-x-auto">
+      <button class="tabbtn active shrink-0 flex items-center gap-2 px-3.5 py-2 rounded-lg border border-transparent text-xs font-medium text-slate-400 transition" data-tab="predictor">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h4l2 5 4-10 2 5h6"/></svg>Live Predictor</button>
+      <button class="tabbtn shrink-0 flex items-center gap-2 px-3.5 py-2 rounded-lg border border-transparent text-xs font-medium text-slate-400 transition" data-tab="eda">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>Kaggle Dataset &amp; EDA</button>
+      <button class="tabbtn shrink-0 flex items-center gap-2 px-3.5 py-2 rounded-lg border border-transparent text-xs font-medium text-slate-400 transition" data-tab="evaluation">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><rect x="5" y="12" width="3" height="7"/><rect x="10.5" y="8" width="3" height="11"/><rect x="16" y="4" width="3" height="15"/></svg>Model Evaluation</button>
+      <button class="tabbtn shrink-0 flex items-center gap-2 px-3.5 py-2 rounded-lg border border-transparent text-xs font-medium text-slate-400 transition" data-tab="source">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m8 6-6 6 6 6"/><path d="m16 6 6 6-6 6"/></svg>Source Code &amp; Files</button>
+      <button class="tabbtn shrink-0 flex items-center gap-2 px-3.5 py-2 rounded-lg border border-transparent text-xs font-medium text-slate-400 transition" data-tab="viva">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>College Viva Guide</button>
+      <div class="ml-auto shrink-0 hidden sm:flex items-center gap-2 text-[11px] text-slate-500">
+        <span id="modelStatus" class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>loading model</span>
       </div>
     </div>
-  </header>
+  </div>
+</header>
 
-  <!-- Main Content Container -->
-  <main class="max-w-6xl mx-auto px-4 sm:px-6 py-8">
-    <div class="bg-gradient-to-r from-slate-800/80 via-indigo-950/40 to-slate-800/80 border border-slate-700/60 rounded-2xl p-6 mb-8 relative overflow-hidden shadow-xl">
-      <div class="relative z-10 max-w-3xl">
-        <div class="inline-block text-xs font-semibold uppercase tracking-wider text-indigo-400 mb-2">Machine Learning College Demonstration</div>
-        <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Clinical Heart Disease Risk Assessment System</h2>
-        <p class="mt-2 text-sm text-slate-300 leading-relaxed">
-          This is the static GitHub Pages build of the project. The trained Random Forest (100 trees, max depth 6) and its StandardScaler have been exported to JSON and are evaluated entirely inside your browser &mdash; no server and no API calls. Enter the 13 clinical indicators below or load a preset clinical profile to see the model&rsquo;s estimate in real time.
-        </p>
+<main class="max-w-7xl mx-auto px-4 sm:px-6 py-7">
 
-        <!-- Quick Sample Presets -->
-        <div class="mt-5 flex flex-wrap items-center gap-2 pt-4 border-t border-slate-700/50">
-          <span class="text-xs text-slate-400 font-medium mr-1">Quick Test Presets:</span>
-          <button type="button" onclick="loadPreset('healthy')" class="px-3 py-1 rounded-lg text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20 transition cursor-pointer">
-            ✓ Healthy Profile (Low Risk)
+<!-- ============ TAB 1 : PREDICTOR ============ -->
+<section id="tab-predictor">
+  <div class="relative overflow-hidden rounded-2xl border border-slate-800 bg-gradient-to-br from-[#0b1224] via-[#0a0f1e] to-[#0b1224] p-6 sm:p-8 mb-6">
+    <div class="absolute -top-24 -right-16 w-72 h-72 rounded-full bg-indigo-600/10 blur-3xl"></div>
+    <div class="relative grid lg:grid-cols-[1fr_auto] gap-6 items-start">
+      <div>
+        <div class="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-indigo-300/90">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M2 12h4M18 12h4M5 5l3 3M16 16l3 3M19 5l-3 3M8 16l-3 3"/></svg>
+          Machine Learning Decision Support System
+        </div>
+        <h1 class="mt-2 text-3xl sm:text-[34px] font-extrabold tracking-tight text-white leading-tight">Real-Time Cardiovascular Risk Predictor</h1>
+        <p class="mt-2 text-sm text-slate-400 max-w-2xl leading-relaxed">Trained on the Cleveland Heart Disease Dataset. Adjust the 13 clinical biomarkers below to observe how the local Random Forest updates probability and feature contributions in real-time. Everything runs in your browser &mdash; no server calls.</p>
+      </div>
+      <div class="lg:text-right">
+        <div class="text-[11px] text-slate-500 mb-2">Quick Presets:</div>
+        <div class="flex flex-wrap lg:flex-col gap-2 items-start lg:items-end">
+          <button onclick="loadPreset('healthy')" class="px-3 py-1.5 rounded-lg text-[11px] font-medium border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 transition">Healthy Young Adult</button>
+          <button onclick="loadPreset('borderline')" class="px-3 py-1.5 rounded-lg text-[11px] font-medium border border-indigo-500/40 bg-indigo-500/20 text-indigo-200 hover:bg-indigo-500/30 transition">Borderline Profile</button>
+          <button onclick="loadPreset('highrisk')" class="px-3 py-1.5 rounded-lg text-[11px] font-medium border border-slate-700 bg-slate-800/60 text-slate-300 hover:bg-slate-800 transition">High Risk Cardiac Patient</button>
+          <button onclick="document.getElementById('batchCard').classList.toggle('hidden')" class="px-3 py-1.5 rounded-lg text-[11px] font-medium border border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/10 transition">&#9650; Batch Test</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid lg:grid-cols-12 gap-6">
+    <div class="lg:col-span-7 space-y-6">
+      <div class="rounded-2xl border border-slate-800 bg-[#0a1020] p-5 sm:p-6">
+        <div class="flex items-center justify-between pb-4 mb-5 border-b border-slate-800">
+          <div class="flex items-center gap-2">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-indigo-400"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><circle cx="12" cy="12" r="3"/></svg>
+            <h2 class="text-[13px] font-bold uppercase tracking-[0.15em] text-slate-200">Patient Diagnostic Parameters</h2>
+          </div>
+          <button onclick="loadPreset('borderline')" class="text-[11px] text-slate-500 hover:text-slate-300 transition flex items-center gap-1">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>Reset</button>
+        </div>
+
+        <form id="predictionForm" onsubmit="handlePredict(event)" class="space-y-6">
+          <div>
+            <div class="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.15em] text-indigo-300 mb-3"><span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>1. Demographics &amp; Symptoms</div>
+            <div class="grid sm:grid-cols-2 gap-4">
+              <div>
+  <div class="flex items-center justify-between mb-1.5">
+    <label class="text-xs font-medium text-slate-300" for="age">Age</label>
+    <span class="text-xs font-mono text-indigo-300"><span id="ageOut">55</span> yrs</span>
+  </div>
+  <input type="range" id="age" name="age" min="18" max="100" step="1" value="55" class="slider w-full" oninput="document.getElementById('ageOut').textContent=this.value">
+</div>
+              <div>
+  <label class="block text-xs font-medium text-slate-300 mb-1.5" for="sex">Gender</label>
+  <select id="sex" name="sex" class="w-full px-3 py-2 bg-slate-950/80 border border-slate-800 rounded-lg text-sm text-slate-200 focus:outline-none focus:border-indigo-500"><option value="1" selected>Male (1)</option><option value="0">Female (0)</option></select>
+</div>
+              <div>
+  <label class="block text-xs font-medium text-slate-300 mb-1.5" for="cp">Chest Pain (cp)</label>
+  <select id="cp" name="cp" class="w-full px-3 py-2 bg-slate-950/80 border border-slate-800 rounded-lg text-sm text-slate-200 focus:outline-none focus:border-indigo-500"><option value="0">0: Typical Angina</option><option value="1" selected>1: Atypical Angina</option><option value="2">2: Non-Anginal Pain</option><option value="3">3: Asymptomatic</option></select>
+</div>
+            </div>
+          </div>
+          <div>
+            <div class="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.15em] text-indigo-300 mb-3"><span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>2. Hemodynamics &amp; Blood Chemistry</div>
+            <div class="grid sm:grid-cols-2 gap-4">
+              <div>
+  <div class="flex items-center justify-between mb-1.5">
+    <label class="text-xs font-medium text-slate-300" for="trestbps">Resting BP</label>
+    <span class="text-xs font-mono text-indigo-300"><span id="trestbpsOut">135</span> mm Hg</span>
+  </div>
+  <input type="range" id="trestbps" name="trestbps" min="80" max="220" step="1" value="135" class="slider w-full" oninput="document.getElementById('trestbpsOut').textContent=this.value">
+</div>
+              <div>
+  <div class="flex items-center justify-between mb-1.5">
+    <label class="text-xs font-medium text-slate-300" for="chol">Cholesterol</label>
+    <span class="text-xs font-mono text-indigo-300"><span id="cholOut">245</span> mg/dl</span>
+  </div>
+  <input type="range" id="chol" name="chol" min="100" max="600" step="1" value="245" class="slider w-full" oninput="document.getElementById('cholOut').textContent=this.value">
+</div>
+              <div>
+  <label class="block text-xs font-medium text-slate-300 mb-1.5" for="fbs">Fasting Glucose > 120</label>
+  <select id="fbs" name="fbs" class="w-full px-3 py-2 bg-slate-950/80 border border-slate-800 rounded-lg text-sm text-slate-200 focus:outline-none focus:border-indigo-500"><option value="0" selected>False</option><option value="1">True</option></select>
+</div>
+            </div>
+          </div>
+          <div>
+            <div class="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.15em] text-indigo-300 mb-3"><span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>3. Stress Test &amp; Cardiac Diagnostics</div>
+            <div class="grid sm:grid-cols-2 gap-4">
+              <div>
+  <div class="flex items-center justify-between mb-1.5">
+    <label class="text-xs font-medium text-slate-300" for="thalach">Max Heart Rate</label>
+    <span class="text-xs font-mono text-indigo-300"><span id="thalachOut">148</span> bpm</span>
+  </div>
+  <input type="range" id="thalach" name="thalach" min="60" max="220" step="1" value="148" class="slider w-full" oninput="document.getElementById('thalachOut').textContent=this.value">
+</div>
+              <div>
+  <div class="flex items-center justify-between mb-1.5">
+    <label class="text-xs font-medium text-slate-300" for="oldpeak">ST Depression</label>
+    <span class="text-xs font-mono text-indigo-300"><span id="oldpeakOut">1.1</span> mm</span>
+  </div>
+  <input type="range" id="oldpeak" name="oldpeak" min="0" max="6.5" step="0.1" value="1.1" class="slider w-full" oninput="document.getElementById('oldpeakOut').textContent=this.value">
+</div>
+              <div>
+  <label class="block text-xs font-medium text-slate-300 mb-1.5" for="exang">Exercise Angina</label>
+  <select id="exang" name="exang" class="w-full px-3 py-2 bg-slate-950/80 border border-slate-800 rounded-lg text-sm text-slate-200 focus:outline-none focus:border-indigo-500"><option value="0" selected>No</option><option value="1">Yes</option></select>
+</div>
+              <div>
+  <label class="block text-xs font-medium text-slate-300 mb-1.5" for="restecg">Resting ECG</label>
+  <select id="restecg" name="restecg" class="w-full px-3 py-2 bg-slate-950/80 border border-slate-800 rounded-lg text-sm text-slate-200 focus:outline-none focus:border-indigo-500"><option value="0">0: Normal</option><option value="1" selected>1: ST-T Wave Abnormality</option><option value="2">2: LV Hypertrophy</option></select>
+</div>
+              <div>
+  <label class="block text-xs font-medium text-slate-300 mb-1.5" for="slope">ST Slope</label>
+  <select id="slope" name="slope" class="w-full px-3 py-2 bg-slate-950/80 border border-slate-800 rounded-lg text-sm text-slate-200 focus:outline-none focus:border-indigo-500"><option value="0">0: Upsloping</option><option value="1" selected>1: Flat</option><option value="2">2: Downsloping</option></select>
+</div>
+              <div>
+  <label class="block text-xs font-medium text-slate-300 mb-1.5" for="ca">Major Vessels (ca)</label>
+  <select id="ca" name="ca" class="w-full px-3 py-2 bg-slate-950/80 border border-slate-800 rounded-lg text-sm text-slate-200 focus:outline-none focus:border-indigo-500"><option value="0">0</option><option value="1" selected>1</option><option value="2">2</option><option value="3">3</option></select>
+</div>
+              <div>
+  <label class="block text-xs font-medium text-slate-300 mb-1.5" for="thal">Thallium Test</label>
+  <select id="thal" name="thal" class="w-full px-3 py-2 bg-slate-950/80 border border-slate-800 rounded-lg text-sm text-slate-200 focus:outline-none focus:border-indigo-500"><option value="1">1: Normal</option><option value="2" selected>2: Fixed Defect</option><option value="3">3: Reversible Defect</option></select>
+</div>
+            </div>
+          </div>
+          <button type="submit" id="submitBtn" disabled class="w-full py-3 px-4 rounded-xl font-semibold text-sm text-white bg-gradient-to-r from-indigo-600 to-fuchsia-600 hover:from-indigo-500 hover:to-fuchsia-500 disabled:opacity-50 transition flex items-center justify-center gap-2 shadow-lg shadow-indigo-900/40">
+            <span id="submitLabel">Loading model&hellip;</span>
+            <span class="text-[10px] px-2 py-0.5 rounded bg-white/15 font-mono">in-browser</span>
           </button>
-          <button type="button" onclick="loadPreset('borderline')" class="px-3 py-1 rounded-lg text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/30 hover:bg-amber-500/20 transition cursor-pointer">
-            ⚠ Borderline Senior
-          </button>
-          <button type="button" onclick="loadPreset('highrisk')" class="px-3 py-1 rounded-lg text-xs font-medium bg-rose-500/10 text-rose-400 border border-rose-500/30 hover:bg-rose-500/20 transition cursor-pointer">
-            ✕ High Risk Cardiac Patient
-          </button>
+        </form>
+      </div>
+
+      <!-- batch test -->
+      <div id="batchCard" class="hidden rounded-2xl border border-emerald-500/25 bg-[#0a1020] p-5">
+        <h3 class="text-[13px] font-bold uppercase tracking-[0.15em] text-emerald-300 mb-1">Batch Test</h3>
+        <p class="text-[11px] text-slate-500 mb-3">Paste CSV rows with the 13 feature columns (header optional). One patient per line.</p>
+        <textarea id="batchInput" rows="4" class="w-full p-3 bg-slate-950/80 border border-slate-800 rounded-lg text-[11px] font-mono text-slate-300 focus:outline-none focus:border-emerald-600"></textarea>
+        <div class="flex gap-2 mt-2">
+          <button onclick="runBatch()" class="px-3 py-1.5 rounded-lg text-[11px] font-medium bg-emerald-600/20 border border-emerald-500/40 text-emerald-300 hover:bg-emerald-600/30 transition">Run batch</button>
+          <button onclick="fillSampleBatch()" class="px-3 py-1.5 rounded-lg text-[11px] font-medium border border-slate-700 text-slate-400 hover:text-slate-200 transition">Load sample rows</button>
         </div>
+        <div id="batchResult" class="mt-3 overflow-x-auto"></div>
       </div>
     </div>
 
-    <!-- Hold-out metrics (from model.json) -->
-    <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-8">
-      <div class="bg-slate-800/60 border border-slate-700 rounded-xl p-3 text-center">
-        <div class="text-[10px] uppercase tracking-wider text-slate-400 mb-1">Accuracy</div>
-        <div id="mAcc" class="text-lg font-bold text-indigo-400 font-mono">&mdash;</div>
-      </div>
-      <div class="bg-slate-800/60 border border-slate-700 rounded-xl p-3 text-center">
-        <div class="text-[10px] uppercase tracking-wider text-slate-400 mb-1">Precision</div>
-        <div id="mPrec" class="text-lg font-bold text-indigo-400 font-mono">&mdash;</div>
-      </div>
-      <div class="bg-slate-800/60 border border-slate-700 rounded-xl p-3 text-center">
-        <div class="text-[10px] uppercase tracking-wider text-slate-400 mb-1">Recall</div>
-        <div id="mRec" class="text-lg font-bold text-indigo-400 font-mono">&mdash;</div>
-      </div>
-      <div class="bg-slate-800/60 border border-slate-700 rounded-xl p-3 text-center">
-        <div class="text-[10px] uppercase tracking-wider text-slate-400 mb-1">F1-Score</div>
-        <div id="mF1" class="text-lg font-bold text-indigo-400 font-mono">&mdash;</div>
-      </div>
-      <div class="bg-slate-800/60 border border-slate-700 rounded-xl p-3 text-center">
-        <div class="text-[10px] uppercase tracking-wider text-slate-400 mb-1">ROC-AUC</div>
-        <div id="mAuc" class="text-lg font-bold text-indigo-400 font-mono">&mdash;</div>
-      </div>
-    </div>
-    <p class="text-[11px] text-slate-500 -mt-5 mb-8">Hold-out metrics from the 20% stratified test split of <code class="text-slate-400">dataset.csv</code> (29 records &mdash; a small sample, so these scores are optimistic). Educational demonstration only &mdash; not a clinical device.</p>
-
-    <!-- 2-Column Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-      <!-- Input Form -->
-      <div class="lg:col-span-7 space-y-6">
-        <div class="bg-slate-800/60 border border-slate-700 rounded-2xl p-6 shadow-xl backdrop-blur">
-          <div class="flex items-center justify-between pb-4 mb-6 border-b border-slate-700">
-            <div>
-              <h3 class="text-lg font-bold text-white">Patient Clinical Parameters</h3>
-              <p class="text-xs text-slate-400">13 standard Cleveland Kaggle dataset diagnostic features</p>
-            </div>
-            <button type="button" onclick="loadPreset('borderline')" class="text-xs text-slate-400 hover:text-white underline cursor-pointer">
-              Reset Values
-            </button>
-          </div>
-
-          <form id="predictionForm" onsubmit="handlePredict(event)" class="space-y-5">
-            <div class="text-xs font-bold uppercase tracking-wider text-indigo-400 flex items-center gap-2">
-              <span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span> 1. Demographics & Symptoms
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <label class="block text-xs font-medium text-slate-300 mb-1" for="age">Age (Years)</label>
-                <input type="number" id="age" name="age" min="18" max="100" value="54" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-indigo-500">
-              </div>
-              <div>
-                <label class="block text-xs font-medium text-slate-300 mb-1" for="sex">Gender</label>
-                <select id="sex" name="sex" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-indigo-500">
-                  <option value="1">Male</option>
-                  <option value="0">Female</option>
-                </select>
-              </div>
-              <div>
-                <label class="block text-xs font-medium text-slate-300 mb-1" for="cp">Chest Pain Type</label>
-                <select id="cp" name="cp" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-indigo-500">
-                  <option value="0">0: Typical Angina</option>
-                  <option value="1" selected>1: Atypical Angina</option>
-                  <option value="2">2: Non-Anginal Pain</option>
-                  <option value="3">3: Asymptomatic</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="text-xs font-bold uppercase tracking-wider text-indigo-400 flex items-center gap-2 pt-2">
-              <span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span> 2. Hemodynamics & Blood Chemistry
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <label class="block text-xs font-medium text-slate-300 mb-1" for="trestbps">Resting BP (mm Hg)</label>
-                <input type="number" id="trestbps" name="trestbps" min="80" max="220" value="130" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-indigo-500">
-              </div>
-              <div>
-                <label class="block text-xs font-medium text-slate-300 mb-1" for="chol">Cholesterol (mg/dl)</label>
-                <input type="number" id="chol" name="chol" min="100" max="600" value="240" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-indigo-500">
-              </div>
-              <div>
-                <label class="block text-xs font-medium text-slate-300 mb-1" for="fbs">Fasting Glucose > 120</label>
-                <select id="fbs" name="fbs" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-indigo-500">
-                  <option value="0" selected>False (<= 120 mg/dl)</option>
-                  <option value="1">True (> 120 mg/dl)</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="text-xs font-bold uppercase tracking-wider text-indigo-400 flex items-center gap-2 pt-2">
-              <span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span> 3. Stress Test & Cardiac Diagnostics
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <label class="block text-xs font-medium text-slate-300 mb-1" for="thalach">Max Heart Rate (bpm)</label>
-                <input type="number" id="thalach" name="thalach" min="60" max="220" value="150" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-indigo-500">
-              </div>
-              <div>
-                <label class="block text-xs font-medium text-slate-300 mb-1" for="exang">Exercise Angina?</label>
-                <select id="exang" name="exang" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-indigo-500">
-                  <option value="0" selected>No</option>
-                  <option value="1">Yes</option>
-                </select>
-              </div>
-              <div>
-                <label class="block text-xs font-medium text-slate-300 mb-1" for="oldpeak">ST Depression (mm)</label>
-                <input type="number" step="0.1" id="oldpeak" name="oldpeak" min="0.0" max="8.0" value="1.0" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-indigo-500">
-              </div>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
-              <div>
-                <label class="block text-xs font-medium text-slate-300 mb-1" for="restecg">Resting ECG</label>
-                <select id="restecg" name="restecg" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-indigo-500">
-                  <option value="0" selected>0: Normal</option>
-                  <option value="1">1: ST-T Wave</option>
-                  <option value="2">2: Hypertrophy</option>
-                </select>
-              </div>
-              <div>
-                <label class="block text-xs font-medium text-slate-300 mb-1" for="slope">ST Slope</label>
-                <select id="slope" name="slope" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-indigo-500">
-                  <option value="0">0: Upsloping</option>
-                  <option value="1" selected>1: Flat</option>
-                  <option value="2">2: Downsloping</option>
-                </select>
-              </div>
-              <div>
-                <label class="block text-xs font-medium text-slate-300 mb-1" for="ca">Major Vessels (ca)</label>
-                <select id="ca" name="ca" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-indigo-500">
-                  <option value="0" selected>0 Vessels</option>
-                  <option value="1">1 Vessel</option>
-                  <option value="2">2 Vessels</option>
-                  <option value="3">3 Vessels</option>
-                </select>
-              </div>
-              <div>
-                <label class="block text-xs font-medium text-slate-300 mb-1" for="thal">Thallium Test</label>
-                <select id="thal" name="thal" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-indigo-500">
-                  <option value="1">1: Normal</option>
-                  <option value="2" selected>2: Fixed</option>
-                  <option value="3">3: Reversible</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="pt-4">
-              <button type="submit" id="submitBtn" disabled class="w-full py-3.5 px-4 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-semibold rounded-xl shadow-lg shadow-indigo-600/30 transition flex items-center justify-center gap-2 cursor-pointer">
-                <span>Run Local Model Prediction</span>
-                <span class="text-xs px-2 py-0.5 rounded bg-white/20 font-mono">in-browser</span>
-              </button>
-            </div>
-          </form>
+    <div class="lg:col-span-5 space-y-6">
+      <div class="rounded-2xl border border-slate-800 bg-[#0a1020] p-5 sm:p-6">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
+          <span class="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-500">Inference Result</span>
+          <span id="riskBadge" class="text-[11px] font-semibold px-2.5 py-1 rounded-full border border-slate-700 bg-slate-800/60 text-slate-400">Awaiting input</span>
         </div>
-      </div>
-
-      <!-- Right Column: Prediction Output -->
-      <div class="lg:col-span-5 space-y-6">
-        <div id="resultCard" class="bg-slate-800/60 border border-slate-700 rounded-2xl p-6 shadow-xl backdrop-blur relative">
-          <div class="flex items-center justify-between pb-3 border-b border-slate-700/80 mb-4">
-            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Inference Result</span>
-            <span id="riskBadge" class="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-              Low Risk
-            </span>
+        <div class="text-center py-3">
+          <div id="riskIcon" class="w-14 h-14 mx-auto rounded-2xl bg-slate-800/60 text-slate-500 flex items-center justify-center text-2xl font-bold mb-3">?</div>
+          <h4 id="resultTitle" class="text-lg font-extrabold text-white">Run the model to see a result</h4>
+          <p id="resultSubtitle" class="text-[11px] text-slate-500 mt-1">Random Forest &middot; 100 trees &middot; client-side</p>
+        </div>
+        <div class="mt-3 p-4 rounded-xl bg-slate-950/70 border border-slate-800">
+          <div class="flex items-center justify-between text-[11px] mb-2">
+            <span class="text-slate-400">Heart Disease Probability</span>
+            <span id="probText" class="font-bold font-mono text-sm text-slate-300">&mdash;</span>
           </div>
-
-          <div class="text-center py-4">
-            <div id="riskGaugeIcon" class="w-16 h-16 mx-auto rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-3xl font-bold mb-3 shadow-inner">
-              ✓
-            </div>
-            <h4 id="resultTitle" class="text-xl font-extrabold text-white">Low Risk / Healthy Profile</h4>
-            <p id="resultSubtitle" class="text-xs text-slate-400 mt-1">Random Forest &bull; 100 trees &bull; computed in your browser</p>
-          </div>
-
-          <div class="mt-4 p-4 rounded-xl bg-slate-900/80 border border-slate-700/60">
-            <div class="flex items-center justify-between text-xs mb-1.5">
-              <span class="font-medium text-slate-300">Heart Disease Probability:</span>
-              <span id="probText" class="font-bold text-emerald-400 font-mono text-sm">18.4%</span>
-            </div>
-            <div class="w-full bg-slate-800 rounded-full h-3 overflow-hidden p-0.5 border border-slate-700">
-              <div id="probBar" class="bg-emerald-500 h-full rounded-full transition-all duration-700 ease-out" style="width: 18.4%"></div>
-            </div>
-            <div class="flex justify-between text-[10px] text-slate-500 mt-1">
-              <span>0% (Healthy)</span>
-              <span>Threshold: 50%</span>
-              <span>100% (High Risk)</span>
-            </div>
-          </div>
-
-          <div class="mt-5">
-            <h5 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Automated Clinical Insights:</h5>
-            <ul id="recommendationsList" class="space-y-2 text-xs text-slate-300">
-              <li class="flex items-start gap-2 bg-slate-900/40 p-2.5 rounded-lg border border-slate-800">
-                <span class="text-emerald-400 font-bold">✓</span>
-                <span>Resting hemodynamics and cardiac parameters are within optimal standard tolerances.</span>
-              </li>
-            </ul>
-          </div>
+          <div class="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden"><div id="probBar" class="h-full rounded-full bg-slate-600 transition-all duration-700" style="width:0%"></div></div>
+          <div class="flex justify-between text-[9px] text-slate-600 mt-1.5"><span>0% healthy</span><span>threshold 50%</span><span>100% high risk</span></div>
+        </div>
+        <div class="mt-4">
+          <h5 class="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-500 mb-2">Feature contributions</h5>
+          <div id="contribList" class="space-y-1.5 text-[11px] text-slate-500">Run a prediction to see which biomarkers push the risk up.</div>
+        </div>
+        <div class="mt-4">
+          <h5 class="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-500 mb-2">Clinical insights</h5>
+          <ul id="recList" class="space-y-1.5 text-[11px] text-slate-400"><li class="p-2.5 rounded-lg bg-slate-900/60 border border-slate-800">Waiting for a prediction.</li></ul>
         </div>
       </div>
     </div>
-    <footer class="max-w-6xl mx-auto px-4 sm:px-6 pb-10 pt-2 text-center text-[11px] text-slate-500">
-    <p>Static build for GitHub Pages &mdash; the Random Forest runs client-side in JavaScript.
-    The original Flask app (<code class="text-slate-400">app.py</code>) still runs locally with <code class="text-slate-400">python app.py</code>.</p>
-    <p class="mt-1"><a href="https://github.com/octaboomai/MediPredict-ML" class="text-indigo-400 hover:underline">View source on GitHub</a></p>
-  </footer>
+  </div>
+</section>
+
+<!-- ============ TAB 2 : EDA ============ -->
+<section id="tab-eda" class="hidden">
+  <h1 class="text-2xl font-extrabold text-white mb-1">Kaggle Dataset &amp; Exploratory Analysis</h1>
+  <p class="text-sm text-slate-500 mb-5">Cleveland heart-disease records shipped as <code class="text-slate-400">dataset.csv</code>. All figures below are computed from that file.</p>
+
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+    <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
+      <div class="text-[10px] uppercase tracking-widest text-slate-500">Records</div>
+      <div class="text-2xl font-bold text-indigo-300 font-mono mt-1">30</div>
+      <div class="text-[11px] text-slate-500 mt-0.5">rows in dataset.csv</div></div><div class="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
+      <div class="text-[10px] uppercase tracking-widest text-slate-500">Features</div>
+      <div class="text-2xl font-bold text-indigo-300 font-mono mt-1">13</div>
+      <div class="text-[11px] text-slate-500 mt-0.5">clinical predictors</div></div><div class="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
+      <div class="text-[10px] uppercase tracking-widest text-slate-500">Disease cases</div>
+      <div class="text-2xl font-bold text-rose-300 font-mono mt-1">23</div>
+      <div class="text-[11px] text-slate-500 mt-0.5">target = 1</div></div><div class="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
+      <div class="text-[10px] uppercase tracking-widest text-slate-500">Imbalance</div>
+      <div class="text-2xl font-bold text-amber-300 font-mono mt-1">23:7</div>
+      <div class="text-[11px] text-slate-500 mt-0.5">disease : healthy</div></div>
+  </div>
+
+  <div class="grid lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2 rounded-2xl border border-slate-800 bg-[#0a1020] p-5">
+      <h2 class="text-[13px] font-bold uppercase tracking-[0.15em] text-slate-300 mb-3">Numeric feature distributions</h2>
+      <div class="grid sm:grid-cols-2 gap-4"><div class="bg-slate-900/50 border border-slate-800 rounded-xl p-4">
+  <div class="flex items-baseline justify-between mb-2"><span class="text-xs font-semibold text-slate-300">age</span>
+  <span class="text-[10px] text-slate-500 font-mono">mean 53.8 &middot; 34.0&ndash;69.0</span></div>
+  <svg viewBox="0 0 340 120" class="w-full"><rect x="6.0" y="76.5" width="35.8" height="21.5" rx="3" fill="#818cf8" opacity="0.85"/><text x="23.9" y="112" fill="#64748b" font-size="9" text-anchor="middle">34</text><text x="23.9" y="73.5" fill="#94a3b8" font-size="9" text-anchor="middle">2</text><rect x="47.8" y="76.5" width="35.8" height="21.5" rx="3" fill="#818cf8" opacity="0.85"/><text x="65.6" y="112" fill="#64748b" font-size="9" text-anchor="middle">38</text><text x="65.6" y="73.5" fill="#94a3b8" font-size="9" text-anchor="middle">2</text><rect x="89.5" y="55.0" width="35.8" height="43.0" rx="3" fill="#818cf8" opacity="0.85"/><text x="107.4" y="112" fill="#64748b" font-size="9" text-anchor="middle">43</text><text x="107.4" y="52.0" fill="#94a3b8" font-size="9" text-anchor="middle">4</text><rect x="131.2" y="65.8" width="35.8" height="32.2" rx="3" fill="#818cf8" opacity="0.85"/><text x="149.1" y="112" fill="#64748b" font-size="9" text-anchor="middle">47</text><text x="149.1" y="62.8" fill="#94a3b8" font-size="9" text-anchor="middle">3</text><rect x="173.0" y="65.8" width="35.8" height="32.2" rx="3" fill="#818cf8" opacity="0.85"/><text x="190.9" y="112" fill="#64748b" font-size="9" text-anchor="middle">52</text><text x="190.9" y="62.8" fill="#94a3b8" font-size="9" text-anchor="middle">3</text><rect x="214.8" y="12.0" width="35.8" height="86.0" rx="3" fill="#818cf8" opacity="0.85"/><text x="232.6" y="112" fill="#64748b" font-size="9" text-anchor="middle">56</text><text x="232.6" y="9.0" fill="#94a3b8" font-size="9" text-anchor="middle">8</text><rect x="256.5" y="55.0" width="35.8" height="43.0" rx="3" fill="#818cf8" opacity="0.85"/><text x="274.4" y="112" fill="#64748b" font-size="9" text-anchor="middle">60</text><text x="274.4" y="52.0" fill="#94a3b8" font-size="9" text-anchor="middle">4</text><rect x="298.2" y="55.0" width="35.8" height="43.0" rx="3" fill="#818cf8" opacity="0.85"/><text x="316.1" y="112" fill="#64748b" font-size="9" text-anchor="middle">65</text><text x="316.1" y="52.0" fill="#94a3b8" font-size="9" text-anchor="middle">4</text></svg></div>
+<div class="bg-slate-900/50 border border-slate-800 rounded-xl p-4">
+  <div class="flex items-baseline justify-between mb-2"><span class="text-xs font-semibold text-slate-300">trestbps</span>
+  <span class="text-[10px] text-slate-500 font-mono">mean 136.23 &middot; 105.0&ndash;172.0</span></div>
+  <svg viewBox="0 0 340 120" class="w-full"><rect x="6.0" y="76.5" width="35.8" height="21.5" rx="3" fill="#818cf8" opacity="0.85"/><text x="23.9" y="112" fill="#64748b" font-size="9" text-anchor="middle">105</text><text x="23.9" y="73.5" fill="#94a3b8" font-size="9" text-anchor="middle">2</text><rect x="47.8" y="33.5" width="35.8" height="64.5" rx="3" fill="#818cf8" opacity="0.85"/><text x="65.6" y="112" fill="#64748b" font-size="9" text-anchor="middle">113</text><text x="65.6" y="30.5" fill="#94a3b8" font-size="9" text-anchor="middle">6</text><rect x="89.5" y="55.0" width="35.8" height="43.0" rx="3" fill="#818cf8" opacity="0.85"/><text x="107.4" y="112" fill="#64748b" font-size="9" text-anchor="middle">122</text><text x="107.4" y="52.0" fill="#94a3b8" font-size="9" text-anchor="middle">4</text><rect x="131.2" y="76.5" width="35.8" height="21.5" rx="3" fill="#818cf8" opacity="0.85"/><text x="149.1" y="112" fill="#64748b" font-size="9" text-anchor="middle">130</text><text x="149.1" y="73.5" fill="#94a3b8" font-size="9" text-anchor="middle">2</text><rect x="173.0" y="12.0" width="35.8" height="86.0" rx="3" fill="#818cf8" opacity="0.85"/><text x="190.9" y="112" fill="#64748b" font-size="9" text-anchor="middle">138</text><text x="190.9" y="9.0" fill="#94a3b8" font-size="9" text-anchor="middle">8</text><rect x="214.8" y="33.5" width="35.8" height="64.5" rx="3" fill="#818cf8" opacity="0.85"/><text x="232.6" y="112" fill="#64748b" font-size="9" text-anchor="middle">147</text><text x="232.6" y="30.5" fill="#94a3b8" font-size="9" text-anchor="middle">6</text><rect x="256.5" y="87.2" width="35.8" height="10.8" rx="3" fill="#818cf8" opacity="0.85"/><text x="274.4" y="112" fill="#64748b" font-size="9" text-anchor="middle">155</text><text x="274.4" y="84.2" fill="#94a3b8" font-size="9" text-anchor="middle">1</text><rect x="298.2" y="87.2" width="35.8" height="10.8" rx="3" fill="#818cf8" opacity="0.85"/><text x="316.1" y="112" fill="#64748b" font-size="9" text-anchor="middle">164</text><text x="316.1" y="84.2" fill="#94a3b8" font-size="9" text-anchor="middle">1</text></svg></div>
+<div class="bg-slate-900/50 border border-slate-800 rounded-xl p-4">
+  <div class="flex items-baseline justify-between mb-2"><span class="text-xs font-semibold text-slate-300">chol</span>
+  <span class="text-[10px] text-slate-500 font-mono">mean 249.73 &middot; 166.0&ndash;407.0</span></div>
+  <svg viewBox="0 0 340 120" class="w-full"><rect x="6.0" y="69.3" width="35.8" height="28.7" rx="3" fill="#818cf8" opacity="0.85"/><text x="23.9" y="112" fill="#64748b" font-size="9" text-anchor="middle">166</text><text x="23.9" y="66.3" fill="#94a3b8" font-size="9" text-anchor="middle">3</text><rect x="47.8" y="12.0" width="35.8" height="86.0" rx="3" fill="#818cf8" opacity="0.85"/><text x="65.6" y="112" fill="#64748b" font-size="9" text-anchor="middle">196</text><text x="65.6" y="9.0" fill="#94a3b8" font-size="9" text-anchor="middle">9</text><rect x="89.5" y="31.1" width="35.8" height="66.9" rx="3" fill="#818cf8" opacity="0.85"/><text x="107.4" y="112" fill="#64748b" font-size="9" text-anchor="middle">226</text><text x="107.4" y="28.1" fill="#94a3b8" font-size="9" text-anchor="middle">7</text><rect x="131.2" y="40.7" width="35.8" height="57.3" rx="3" fill="#818cf8" opacity="0.85"/><text x="149.1" y="112" fill="#64748b" font-size="9" text-anchor="middle">256</text><text x="149.1" y="37.7" fill="#94a3b8" font-size="9" text-anchor="middle">6</text><rect x="173.0" y="88.4" width="35.8" height="9.6" rx="3" fill="#818cf8" opacity="0.85"/><text x="190.9" y="112" fill="#64748b" font-size="9" text-anchor="middle">286</text><text x="190.9" y="85.4" fill="#94a3b8" font-size="9" text-anchor="middle">1</text><rect x="214.8" y="78.9" width="35.8" height="19.1" rx="3" fill="#818cf8" opacity="0.85"/><text x="232.6" y="112" fill="#64748b" font-size="9" text-anchor="middle">317</text><text x="232.6" y="75.9" fill="#94a3b8" font-size="9" text-anchor="middle">2</text><rect x="256.5" y="88.4" width="35.8" height="9.6" rx="3" fill="#818cf8" opacity="0.85"/><text x="274.4" y="112" fill="#64748b" font-size="9" text-anchor="middle">347</text><text x="274.4" y="85.4" fill="#94a3b8" font-size="9" text-anchor="middle">1</text><rect x="298.2" y="88.4" width="35.8" height="9.6" rx="3" fill="#818cf8" opacity="0.85"/><text x="316.1" y="112" fill="#64748b" font-size="9" text-anchor="middle">377</text><text x="316.1" y="85.4" fill="#94a3b8" font-size="9" text-anchor="middle">1</text></svg></div>
+<div class="bg-slate-900/50 border border-slate-800 rounded-xl p-4">
+  <div class="flex items-baseline justify-between mb-2"><span class="text-xs font-semibold text-slate-300">thalach</span>
+  <span class="text-[10px] text-slate-500 font-mono">mean 155.6 &middot; 108.0&ndash;192.0</span></div>
+  <svg viewBox="0 0 340 120" class="w-full"><rect x="6.0" y="65.8" width="35.8" height="32.2" rx="3" fill="#818cf8" opacity="0.85"/><text x="23.9" y="112" fill="#64748b" font-size="9" text-anchor="middle">108</text><text x="23.9" y="62.8" fill="#94a3b8" font-size="9" text-anchor="middle">3</text><rect x="47.8" y="87.2" width="35.8" height="10.8" rx="3" fill="#818cf8" opacity="0.85"/><text x="65.6" y="112" fill="#64748b" font-size="9" text-anchor="middle">118</text><text x="65.6" y="84.2" fill="#94a3b8" font-size="9" text-anchor="middle">1</text><rect x="89.5" y="76.5" width="35.8" height="21.5" rx="3" fill="#818cf8" opacity="0.85"/><text x="107.4" y="112" fill="#64748b" font-size="9" text-anchor="middle">129</text><text x="107.4" y="73.5" fill="#94a3b8" font-size="9" text-anchor="middle">2</text><rect x="131.2" y="65.8" width="35.8" height="32.2" rx="3" fill="#818cf8" opacity="0.85"/><text x="149.1" y="112" fill="#64748b" font-size="9" text-anchor="middle">140</text><text x="149.1" y="62.8" fill="#94a3b8" font-size="9" text-anchor="middle">3</text><rect x="173.0" y="22.8" width="35.8" height="75.2" rx="3" fill="#818cf8" opacity="0.85"/><text x="190.9" y="112" fill="#64748b" font-size="9" text-anchor="middle">150</text><text x="190.9" y="19.8" fill="#94a3b8" font-size="9" text-anchor="middle">7</text><rect x="214.8" y="55.0" width="35.8" height="43.0" rx="3" fill="#818cf8" opacity="0.85"/><text x="232.6" y="112" fill="#64748b" font-size="9" text-anchor="middle">160</text><text x="232.6" y="52.0" fill="#94a3b8" font-size="9" text-anchor="middle">4</text><rect x="256.5" y="12.0" width="35.8" height="86.0" rx="3" fill="#818cf8" opacity="0.85"/><text x="274.4" y="112" fill="#64748b" font-size="9" text-anchor="middle">171</text><text x="274.4" y="9.0" fill="#94a3b8" font-size="9" text-anchor="middle">8</text><rect x="298.2" y="76.5" width="35.8" height="21.5" rx="3" fill="#818cf8" opacity="0.85"/><text x="316.1" y="112" fill="#64748b" font-size="9" text-anchor="middle">182</text><text x="316.1" y="73.5" fill="#94a3b8" font-size="9" text-anchor="middle">2</text></svg></div>
+<div class="bg-slate-900/50 border border-slate-800 rounded-xl p-4">
+  <div class="flex items-baseline justify-between mb-2"><span class="text-xs font-semibold text-slate-300">oldpeak</span>
+  <span class="text-[10px] text-slate-500 font-mono">mean 1.56 &middot; 0.0&ndash;5.6</span></div>
+  <svg viewBox="0 0 340 120" class="w-full"><rect x="6.0" y="12.0" width="35.8" height="86.0" rx="3" fill="#818cf8" opacity="0.85"/><text x="23.9" y="112" fill="#64748b" font-size="9" text-anchor="middle">0.0</text><text x="23.9" y="9.0" fill="#94a3b8" font-size="9" text-anchor="middle">9</text><rect x="47.8" y="40.7" width="35.8" height="57.3" rx="3" fill="#818cf8" opacity="0.85"/><text x="65.6" y="112" fill="#64748b" font-size="9" text-anchor="middle">0.7</text><text x="65.6" y="37.7" fill="#94a3b8" font-size="9" text-anchor="middle">6</text><rect x="89.5" y="31.1" width="35.8" height="66.9" rx="3" fill="#818cf8" opacity="0.85"/><text x="107.4" y="112" fill="#64748b" font-size="9" text-anchor="middle">1.4</text><text x="107.4" y="28.1" fill="#94a3b8" font-size="9" text-anchor="middle">7</text><rect x="131.2" y="78.9" width="35.8" height="19.1" rx="3" fill="#818cf8" opacity="0.85"/><text x="149.1" y="112" fill="#64748b" font-size="9" text-anchor="middle">2.1</text><text x="149.1" y="75.9" fill="#94a3b8" font-size="9" text-anchor="middle">2</text><rect x="173.0" y="78.9" width="35.8" height="19.1" rx="3" fill="#818cf8" opacity="0.85"/><text x="190.9" y="112" fill="#64748b" font-size="9" text-anchor="middle">2.8</text><text x="190.9" y="75.9" fill="#94a3b8" font-size="9" text-anchor="middle">2</text><rect x="214.8" y="69.3" width="35.8" height="28.7" rx="3" fill="#818cf8" opacity="0.85"/><text x="232.6" y="112" fill="#64748b" font-size="9" text-anchor="middle">3.5</text><text x="232.6" y="66.3" fill="#94a3b8" font-size="9" text-anchor="middle">3</text><rect x="256.5" y="98.0" width="35.8" height="0.0" rx="3" fill="#818cf8" opacity="0.85"/><text x="274.4" y="112" fill="#64748b" font-size="9" text-anchor="middle">4.2</text><text x="274.4" y="95.0" fill="#94a3b8" font-size="9" text-anchor="middle">0</text><rect x="298.2" y="88.4" width="35.8" height="9.6" rx="3" fill="#818cf8" opacity="0.85"/><text x="316.1" y="112" fill="#64748b" font-size="9" text-anchor="middle">4.9</text><text x="316.1" y="85.4" fill="#94a3b8" font-size="9" text-anchor="middle">1</text></svg></div></div>
+    </div>
+    <div class="space-y-6">
+      <div class="rounded-2xl border border-slate-800 bg-[#0a1020] p-5">
+        <h2 class="text-[13px] font-bold uppercase tracking-[0.15em] text-slate-300 mb-3">Class balance</h2>
+        <div class="flex items-center gap-4">
+          <div class="flex-1">
+            <div class="h-6 w-full rounded-lg overflow-hidden flex">
+              <div class="bg-emerald-500/80 h-full" style="width:23.3%"></div>
+              <div class="bg-rose-500/80 h-full" style="width:76.7%"></div>
+            </div>
+            <div class="flex justify-between text-[10px] text-slate-500 mt-2">
+              <span><span class="inline-block w-2 h-2 rounded-sm bg-emerald-500/80 mr-1"></span>No disease 7</span>
+              <span><span class="inline-block w-2 h-2 rounded-sm bg-rose-500/80 mr-1"></span>Disease 23</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="rounded-2xl border border-slate-800 bg-[#0a1020] p-5">
+        <h2 class="text-[13px] font-bold uppercase tracking-[0.15em] text-slate-300 mb-1">Correlation with target</h2>
+        <p class="text-[10px] text-slate-500 mb-3">Pearson r &middot; pink = positive, blue = negative</p>
+        <svg viewBox="0 0 460 306" class="w-full"><text x="0" y="21" fill="#94a3b8" font-size="10" font-family="monospace">exang</text><rect x="126.2" y="10" width="103.8" height="14" rx="3" fill="#38bdf8" opacity="0.8"/><text x="458" y="21" fill="#cbd5e1" font-size="10" text-anchor="end" font-family="monospace">-0.63</text><text x="0" y="43" fill="#94a3b8" font-size="10" font-family="monospace">oldpeak</text><rect x="128.7" y="32" width="101.3" height="14" rx="3" fill="#38bdf8" opacity="0.8"/><text x="458" y="43" fill="#cbd5e1" font-size="10" text-anchor="end" font-family="monospace">-0.61</text><text x="0" y="65" fill="#94a3b8" font-size="10" font-family="monospace">ca</text><rect x="134.1" y="54" width="95.9" height="14" rx="3" fill="#38bdf8" opacity="0.8"/><text x="458" y="65" fill="#cbd5e1" font-size="10" text-anchor="end" font-family="monospace">-0.58</text><text x="0" y="87" fill="#94a3b8" font-size="10" font-family="monospace">thal</text><rect x="134.1" y="76" width="95.9" height="14" rx="3" fill="#38bdf8" opacity="0.8"/><text x="458" y="87" fill="#cbd5e1" font-size="10" text-anchor="end" font-family="monospace">-0.58</text><text x="0" y="109" fill="#94a3b8" font-size="10" font-family="monospace">trestbps</text><rect x="175.0" y="98" width="55.0" height="14" rx="3" fill="#38bdf8" opacity="0.8"/><text x="458" y="109" fill="#cbd5e1" font-size="10" text-anchor="end" font-family="monospace">-0.33</text><text x="0" y="131" fill="#94a3b8" font-size="10" font-family="monospace">age</text><rect x="175.5" y="120" width="54.5" height="14" rx="3" fill="#38bdf8" opacity="0.8"/><text x="458" y="131" fill="#cbd5e1" font-size="10" text-anchor="end" font-family="monospace">-0.33</text><text x="0" y="153" fill="#94a3b8" font-size="10" font-family="monospace">sex</text><rect x="182.0" y="142" width="48.0" height="14" rx="3" fill="#38bdf8" opacity="0.8"/><text x="458" y="153" fill="#cbd5e1" font-size="10" text-anchor="end" font-family="monospace">-0.29</text><text x="0" y="175" fill="#94a3b8" font-size="10" font-family="monospace">chol</text><rect x="191.4" y="164" width="38.6" height="14" rx="3" fill="#38bdf8" opacity="0.8"/><text x="458" y="175" fill="#cbd5e1" font-size="10" text-anchor="end" font-family="monospace">-0.23</text><text x="0" y="197" fill="#94a3b8" font-size="10" font-family="monospace">fbs</text><rect x="227.5" y="186" width="2.5" height="14" rx="3" fill="#38bdf8" opacity="0.8"/><text x="458" y="197" fill="#cbd5e1" font-size="10" text-anchor="end" font-family="monospace">-0.01</text><text x="0" y="219" fill="#94a3b8" font-size="10" font-family="monospace">slope</text><rect x="230.0" y="208" width="69.7" height="14" rx="3" fill="#f472b6" opacity="0.8"/><text x="458" y="219" fill="#cbd5e1" font-size="10" text-anchor="end" font-family="monospace">+0.42</text><text x="0" y="241" fill="#94a3b8" font-size="10" font-family="monospace">cp</text><rect x="230.0" y="230" width="82.0" height="14" rx="3" fill="#f472b6" opacity="0.8"/><text x="458" y="241" fill="#cbd5e1" font-size="10" text-anchor="end" font-family="monospace">+0.49</text><text x="0" y="263" fill="#94a3b8" font-size="10" font-family="monospace">restecg</text><rect x="230.0" y="252" width="85.3" height="14" rx="3" fill="#f472b6" opacity="0.8"/><text x="458" y="263" fill="#cbd5e1" font-size="10" text-anchor="end" font-family="monospace">+0.52</text><text x="0" y="285" fill="#94a3b8" font-size="10" font-family="monospace">thalach</text><rect x="230.0" y="274" width="100.7" height="14" rx="3" fill="#f472b6" opacity="0.8"/><text x="458" y="285" fill="#cbd5e1" font-size="10" text-anchor="end" font-family="monospace">+0.61</text><line x1="230.0" y1="4" x2="230.0" y2="294" stroke="#334155" stroke-dasharray="3 3"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid lg:grid-cols-2 gap-6 mt-6">
+    <div class="rounded-2xl border border-slate-800 bg-[#0a1020] p-5">
+      <h2 class="text-[13px] font-bold uppercase tracking-[0.15em] text-slate-300 mb-3">Descriptive statistics</h2>
+      <table class="w-full text-[11px]">
+        <thead><tr class="text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-800">
+          <th class="text-left py-2 font-semibold">feature</th><th class="text-right py-2 font-semibold">mean</th><th class="text-right py-2 font-semibold">std</th>
+          <th class="text-right py-2 font-semibold">min</th><th class="text-right py-2 font-semibold">max</th><th class="text-right py-2 font-semibold">r</th></tr></thead>
+        <tbody><tr class="border-b border-slate-800/60"><td class="py-1.5 pr-3 font-mono text-slate-300">age</td>
+  <td class="py-1.5 pr-3 text-right font-mono text-slate-400">53.8</td>
+  <td class="py-1.5 pr-3 text-right font-mono text-slate-400">9.6</td>
+  <td class="py-1.5 pr-3 text-right font-mono text-slate-400">34.0</td>
+  <td class="py-1.5 pr-3 text-right font-mono text-slate-400">69.0</td>
+  <td class="py-1.5 text-right font-mono text-sky-400">-0.33</td></tr>
+<tr class="border-b border-slate-800/60"><td class="py-1.5 pr-3 font-mono text-slate-300">trestbps</td>
+  <td class="py-1.5 pr-3 text-right font-mono text-slate-400">136.23</td>
+  <td class="py-1.5 pr-3 text-right font-mono text-slate-400">15.28</td>
+  <td class="py-1.5 pr-3 text-right font-mono text-slate-400">105.0</td>
+  <td class="py-1.5 pr-3 text-right font-mono text-slate-400">172.0</td>
+  <td class="py-1.5 text-right font-mono text-sky-400">-0.33</td></tr>
+<tr class="border-b border-slate-800/60"><td class="py-1.5 pr-3 font-mono text-slate-300">chol</td>
+  <td class="py-1.5 pr-3 text-right font-mono text-slate-400">249.73</td>
+  <td class="py-1.5 pr-3 text-right font-mono text-slate-400">56.0</td>
+  <td class="py-1.5 pr-3 text-right font-mono text-slate-400">166.0</td>
+  <td class="py-1.5 pr-3 text-right font-mono text-slate-400">407.0</td>
+  <td class="py-1.5 text-right font-mono text-sky-400">-0.23</td></tr>
+<tr class="border-b border-slate-800/60"><td class="py-1.5 pr-3 font-mono text-slate-300">thalach</td>
+  <td class="py-1.5 pr-3 text-right font-mono text-slate-400">155.6</td>
+  <td class="py-1.5 pr-3 text-right font-mono text-slate-400">21.52</td>
+  <td class="py-1.5 pr-3 text-right font-mono text-slate-400">108.0</td>
+  <td class="py-1.5 pr-3 text-right font-mono text-slate-400">192.0</td>
+  <td class="py-1.5 text-right font-mono text-pink-400">+0.61</td></tr>
+<tr class="border-b border-slate-800/60"><td class="py-1.5 pr-3 font-mono text-slate-300">oldpeak</td>
+  <td class="py-1.5 pr-3 text-right font-mono text-slate-400">1.56</td>
+  <td class="py-1.5 pr-3 text-right font-mono text-slate-400">1.36</td>
+  <td class="py-1.5 pr-3 text-right font-mono text-slate-400">0.0</td>
+  <td class="py-1.5 pr-3 text-right font-mono text-slate-400">5.6</td>
+  <td class="py-1.5 text-right font-mono text-sky-400">-0.61</td></tr>
+<tr class="border-b border-slate-800/60"><td class="py-1.5 pr-3 font-mono text-slate-300">sex</td>
+  <td class="py-1.5 pr-3 text-right font-mono text-slate-400">0.6</td>
+  <td class="py-1.5 pr-3 text-right font-mono text-slate-400">0.5</td>
+  <td class="py-1.5 pr-3 text-right font-mono text-slate-400">0.0</td>
+  <td class="py-1.5 pr-3 text-right font-mono text-slate-400">1.0</td>
+  <td class="py-1.5 text-right font-mono text-sky-400">-0.29</td></tr>
+<tr class="border-b border-slate-800/60"><td class="py-1.5 pr-3 font-mono text-slate-300">cp</td>
+  <td class="py-1.5 pr-3 text-right font-mono text-slate-400">1.27</td>
+  <td class="py-1.5 pr-3 text-right font-mono text-slate-400">1.11</td>
+  <td class="py-1.5 pr-3 text-right font-mono text-slate-400">0.0</td>
+  <td class="py-1.5 pr-3 text-right font-mono text-slate-400">3.0</td>
+  <td class="py-1.5 text-right font-mono text-pink-400">+0.49</td></tr>
+<tr class="border-b border-slate-800/60"><td class="py-1.5 pr-3 font-mono text-slate-300">fbs</td>
+  <td class="py-1.5 pr-3 text-right font-mono text-slate-400">0.13</td>
+  <td class="py-1.5 pr-3 text-right font-mono text-slate-400">0.35</td>
+  <td class="py-1.5 pr-3 text-right font-mono text-slate-400">0.0</td>
+  <td class="py-1.5 pr-3 text-right font-mono text-slate-400">1.0</td>
+  <td class="py-1.5 text-right font-mono text-sky-400">-0.01</td></tr>
+<tr class="border-b border-slate-800/60"><td class="py-1.5 pr-3 font-mono text-slate-300">restecg</td>
+  <td class="py-1.5 pr-3 text-right font-mono text-slate-400">0.6</td>
+  <td class="py-1.5 pr-3 text-right font-mono text-slate-400">0.5</td>
+  <td class="py-1.5 pr-3 text-right font-mono text-slate-400">0.0</td>
+  <td class="py-1.5 pr-3 text-right font-mono text-slate-400">1.0</td>
+  <td class="py-1.5 text-right font-mono text-pink-400">+0.52</td></tr>
+<tr class="border-b border-slate-800/60"><td class="py-1.5 pr-3 font-mono text-slate-300">exang</td>
+  <td class="py-1.5 pr-3 text-right font-mono text-slate-400">0.23</td>
+  <td class="py-1.5 pr-3 text-right font-mono text-slate-400">0.43</td>
+  <td class="py-1.5 pr-3 text-right font-mono text-slate-400">0.0</td>
+  <td class="py-1.5 pr-3 text-right font-mono text-slate-400">1.0</td>
+  <td class="py-1.5 text-right font-mono text-sky-400">-0.63</td></tr>
+<tr class="border-b border-slate-800/60"><td class="py-1.5 pr-3 font-mono text-slate-300">slope</td>
+  <td class="py-1.5 pr-3 text-right font-mono text-slate-400">1.4</td>
+  <td class="py-1.5 pr-3 text-right font-mono text-slate-400">0.72</td>
+  <td class="py-1.5 pr-3 text-right font-mono text-slate-400">0.0</td>
+  <td class="py-1.5 pr-3 text-right font-mono text-slate-400">2.0</td>
+  <td class="py-1.5 text-right font-mono text-pink-400">+0.42</td></tr>
+<tr class="border-b border-slate-800/60"><td class="py-1.5 pr-3 font-mono text-slate-300">ca</td>
+  <td class="py-1.5 pr-3 text-right font-mono text-slate-400">0.37</td>
+  <td class="py-1.5 pr-3 text-right font-mono text-slate-400">0.89</td>
+  <td class="py-1.5 pr-3 text-right font-mono text-slate-400">0.0</td>
+  <td class="py-1.5 pr-3 text-right font-mono text-slate-400">3.0</td>
+  <td class="py-1.5 text-right font-mono text-sky-400">-0.58</td></tr>
+<tr class="border-b border-slate-800/60"><td class="py-1.5 pr-3 font-mono text-slate-300">thal</td>
+  <td class="py-1.5 pr-3 text-right font-mono text-slate-400">2.17</td>
+  <td class="py-1.5 pr-3 text-right font-mono text-slate-400">0.53</td>
+  <td class="py-1.5 pr-3 text-right font-mono text-slate-400">1.0</td>
+  <td class="py-1.5 pr-3 text-right font-mono text-slate-400">3.0</td>
+  <td class="py-1.5 text-right font-mono text-sky-400">-0.58</td></tr></tbody>
+      </table>
+    </div>
+    <div class="rounded-2xl border border-slate-800 bg-[#0a1020] p-5">
+      <h2 class="text-[13px] font-bold uppercase tracking-[0.15em] text-slate-300 mb-3">First 10 records</h2>
+      <div class="overflow-x-auto"><table class="w-full">
+        <thead><tr class="border-b border-slate-800"><th class="text-left py-1.5 pr-3 text-[10px] uppercase tracking-wider text-slate-500 font-semibold">age</th><th class="text-left py-1.5 pr-3 text-[10px] uppercase tracking-wider text-slate-500 font-semibold">sex</th><th class="text-left py-1.5 pr-3 text-[10px] uppercase tracking-wider text-slate-500 font-semibold">cp</th><th class="text-left py-1.5 pr-3 text-[10px] uppercase tracking-wider text-slate-500 font-semibold">trestbps</th><th class="text-left py-1.5 pr-3 text-[10px] uppercase tracking-wider text-slate-500 font-semibold">chol</th><th class="text-left py-1.5 pr-3 text-[10px] uppercase tracking-wider text-slate-500 font-semibold">fbs</th><th class="text-left py-1.5 pr-3 text-[10px] uppercase tracking-wider text-slate-500 font-semibold">restecg</th><th class="text-left py-1.5 pr-3 text-[10px] uppercase tracking-wider text-slate-500 font-semibold">thalach</th><th class="text-left py-1.5 pr-3 text-[10px] uppercase tracking-wider text-slate-500 font-semibold">exang</th><th class="text-left py-1.5 pr-3 text-[10px] uppercase tracking-wider text-slate-500 font-semibold">oldpeak</th><th class="text-left py-1.5 pr-3 text-[10px] uppercase tracking-wider text-slate-500 font-semibold">slope</th><th class="text-left py-1.5 pr-3 text-[10px] uppercase tracking-wider text-slate-500 font-semibold">ca</th><th class="text-left py-1.5 pr-3 text-[10px] uppercase tracking-wider text-slate-500 font-semibold">thal</th><th class="text-left py-1.5 pr-3 text-[10px] uppercase tracking-wider text-slate-500 font-semibold">target</th></tr></thead>
+        <tbody><tr class='border-b border-slate-800/40'><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">63</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">1</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">3</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">145</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">233</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">1</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">0</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">150</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">0</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">2.3</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">0</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">0</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">1</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">1</td></tr>
+<tr class='border-b border-slate-800/40'><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">37</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">1</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">2</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">130</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">250</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">0</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">1</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">187</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">0</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">3.5</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">0</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">0</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">2</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">1</td></tr>
+<tr class='border-b border-slate-800/40'><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">41</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">0</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">1</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">130</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">204</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">0</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">0</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">172</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">0</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">1.4</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">2</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">0</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">2</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">1</td></tr>
+<tr class='border-b border-slate-800/40'><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">56</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">1</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">1</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">120</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">236</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">0</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">1</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">178</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">0</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">0.8</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">2</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">0</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">2</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">1</td></tr>
+<tr class='border-b border-slate-800/40'><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">57</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">0</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">0</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">120</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">354</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">0</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">1</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">163</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">1</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">0.6</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">2</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">0</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">2</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">1</td></tr>
+<tr class='border-b border-slate-800/40'><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">57</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">1</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">0</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">140</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">192</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">0</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">1</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">148</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">0</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">0.4</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">1</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">0</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">1</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">1</td></tr>
+<tr class='border-b border-slate-800/40'><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">56</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">0</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">1</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">140</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">294</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">0</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">0</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">153</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">0</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">1.3</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">1</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">0</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">2</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">1</td></tr>
+<tr class='border-b border-slate-800/40'><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">44</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">1</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">1</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">120</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">263</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">0</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">1</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">173</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">0</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">0.0</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">2</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">0</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">3</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">1</td></tr>
+<tr class='border-b border-slate-800/40'><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">52</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">1</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">2</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">172</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">199</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">1</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">1</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">162</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">0</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">0.5</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">2</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">0</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">3</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">1</td></tr>
+<tr class='border-b border-slate-800/40'><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">57</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">1</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">2</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">150</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">168</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">0</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">1</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">174</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">0</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">1.6</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">2</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">0</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">2</td><td class="py-1 pr-3 font-mono text-[11px] text-slate-400">1</td></tr></tbody>
+      </table></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ TAB 3 : EVALUATION ============ -->
+<section id="tab-evaluation" class="hidden">
+  <h1 class="text-2xl font-extrabold text-white mb-1">Model Evaluation</h1>
+  <p class="text-sm text-slate-500 mb-5">Random Forest (100 estimators, max_depth 6, class_weight balanced) &middot; evaluated on a stratified 20% hold-out split.</p>
+
+  <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
+    <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
+      <div class="text-[10px] uppercase tracking-widest text-slate-500">Accuracy</div>
+      <div class="text-2xl font-bold text-indigo-300 font-mono mt-1">100.0%</div>
+      <div class="text-[11px] text-slate-500 mt-0.5"></div></div><div class="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
+      <div class="text-[10px] uppercase tracking-widest text-slate-500">Precision</div>
+      <div class="text-2xl font-bold text-indigo-300 font-mono mt-1">100.0%</div>
+      <div class="text-[11px] text-slate-500 mt-0.5"></div></div><div class="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
+      <div class="text-[10px] uppercase tracking-widest text-slate-500">Recall</div>
+      <div class="text-2xl font-bold text-indigo-300 font-mono mt-1">100.0%</div>
+      <div class="text-[11px] text-slate-500 mt-0.5"></div></div><div class="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
+      <div class="text-[10px] uppercase tracking-widest text-slate-500">F1-Score</div>
+      <div class="text-2xl font-bold text-indigo-300 font-mono mt-1">100.0%</div>
+      <div class="text-[11px] text-slate-500 mt-0.5"></div></div><div class="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
+      <div class="text-[10px] uppercase tracking-widest text-slate-500">ROC-AUC</div>
+      <div class="text-2xl font-bold text-indigo-300 font-mono mt-1">1.000</div>
+      <div class="text-[11px] text-slate-500 mt-0.5"></div></div>
+  </div>
+
+  <div class="grid lg:grid-cols-3 gap-6">
+    <div class="rounded-2xl border border-slate-800 bg-[#0a1020] p-5">
+      <h2 class="text-[13px] font-bold uppercase tracking-[0.15em] text-slate-300 mb-3">Confusion matrix</h2>
+      <div class="grid grid-cols-2 gap-2 text-center">
+        <div class="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/25"><div class="text-2xl font-bold font-mono text-emerald-300">1</div><div class="text-[10px] text-slate-500 mt-1">True Negative</div></div>
+        <div class="p-3 rounded-xl bg-amber-500/10 border border-amber-500/25"><div class="text-2xl font-bold font-mono text-amber-300">0</div><div class="text-[10px] text-slate-500 mt-1">False Positive</div></div>
+        <div class="p-3 rounded-xl bg-rose-500/10 border border-rose-500/25"><div class="text-2xl font-bold font-mono text-rose-300">0</div><div class="text-[10px] text-slate-500 mt-1">False Negative</div></div>
+        <div class="p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/25"><div class="text-2xl font-bold font-mono text-indigo-300">5</div><div class="text-[10px] text-slate-500 mt-1">True Positive</div></div>
+      </div>
+      <p class="text-[10px] text-slate-500 mt-3 leading-relaxed">Hold-out set: 6 records (5 positive / 1 negative), trained on 24.</p>
+    </div>
+    <div class="rounded-2xl border border-slate-800 bg-[#0a1020] p-5">
+      <h2 class="text-[13px] font-bold uppercase tracking-[0.15em] text-slate-300 mb-1">ROC curve</h2>
+      <p class="text-[10px] text-slate-500 mb-2">AUC 1.000 &middot; dashed line = random guessing</p>
+      <svg viewBox="0 0 300 260" class="w-full max-w-xs mx-auto">
+      <line x1="34" y1="226" x2="290" y2="226" stroke="#334155"/>
+      <line x1="34" y1="10" x2="34" y2="226" stroke="#334155"/>
+      <line x1="34" y1="226" x2="290" y2="10" stroke="#475569" stroke-dasharray="4 4"/>
+      <polyline points="34.0,226.0 34.0,182.8 34.0,10.0 290.0,10.0" fill="none" stroke="#a78bfa" stroke-width="2.5"/>
+      <circle cx="34.0" cy="226.0" r="3" fill="#c4b5fd"/><circle cx="34.0" cy="182.8" r="3" fill="#c4b5fd"/><circle cx="34.0" cy="10.0" r="3" fill="#c4b5fd"/><circle cx="290.0" cy="10.0" r="3" fill="#c4b5fd"/>
+      <text x="150.0" y="252" fill="#64748b" font-size="10" text-anchor="middle">False Positive Rate</text>
+      <text x="12" y="130.0" fill="#64748b" font-size="10" text-anchor="middle" transform="rotate(-90 12 130.0)">True Positive Rate</text>
+    </svg>
+    </div>
+    <div class="rounded-2xl border border-slate-800 bg-[#0a1020] p-5">
+      <h2 class="text-[13px] font-bold uppercase tracking-[0.15em] text-slate-300 mb-1">Feature importance</h2>
+      <p class="text-[10px] text-slate-500 mb-3">Mean Gini impurity decrease, normalised</p>
+      <div class="space-y-2"><div class="flex items-center gap-2">
+  <span class="w-20 text-[11px] font-mono text-slate-400">cp</span>
+  <div class="flex-1 bg-slate-800/70 rounded h-3 overflow-hidden"><div class="h-full bg-gradient-to-r from-indigo-500 to-fuchsia-500" style="width:100%"></div></div>
+  <span class="w-12 text-[11px] font-mono text-slate-400 text-right">17.2%</span></div>
+<div class="flex items-center gap-2">
+  <span class="w-20 text-[11px] font-mono text-slate-400">restecg</span>
+  <div class="flex-1 bg-slate-800/70 rounded h-3 overflow-hidden"><div class="h-full bg-gradient-to-r from-indigo-500 to-fuchsia-500" style="width:95%"></div></div>
+  <span class="w-12 text-[11px] font-mono text-slate-400 text-right">16.4%</span></div>
+<div class="flex items-center gap-2">
+  <span class="w-20 text-[11px] font-mono text-slate-400">thalach</span>
+  <div class="flex-1 bg-slate-800/70 rounded h-3 overflow-hidden"><div class="h-full bg-gradient-to-r from-indigo-500 to-fuchsia-500" style="width:80%"></div></div>
+  <span class="w-12 text-[11px] font-mono text-slate-400 text-right">13.8%</span></div>
+<div class="flex items-center gap-2">
+  <span class="w-20 text-[11px] font-mono text-slate-400">slope</span>
+  <div class="flex-1 bg-slate-800/70 rounded h-3 overflow-hidden"><div class="h-full bg-gradient-to-r from-indigo-500 to-fuchsia-500" style="width:57%"></div></div>
+  <span class="w-12 text-[11px] font-mono text-slate-400 text-right">9.9%</span></div>
+<div class="flex items-center gap-2">
+  <span class="w-20 text-[11px] font-mono text-slate-400">age</span>
+  <div class="flex-1 bg-slate-800/70 rounded h-3 overflow-hidden"><div class="h-full bg-gradient-to-r from-indigo-500 to-fuchsia-500" style="width:52%"></div></div>
+  <span class="w-12 text-[11px] font-mono text-slate-400 text-right">8.9%</span></div>
+<div class="flex items-center gap-2">
+  <span class="w-20 text-[11px] font-mono text-slate-400">oldpeak</span>
+  <div class="flex-1 bg-slate-800/70 rounded h-3 overflow-hidden"><div class="h-full bg-gradient-to-r from-indigo-500 to-fuchsia-500" style="width:51%"></div></div>
+  <span class="w-12 text-[11px] font-mono text-slate-400 text-right">8.8%</span></div>
+<div class="flex items-center gap-2">
+  <span class="w-20 text-[11px] font-mono text-slate-400">ca</span>
+  <div class="flex-1 bg-slate-800/70 rounded h-3 overflow-hidden"><div class="h-full bg-gradient-to-r from-indigo-500 to-fuchsia-500" style="width:36%"></div></div>
+  <span class="w-12 text-[11px] font-mono text-slate-400 text-right">6.1%</span></div>
+<div class="flex items-center gap-2">
+  <span class="w-20 text-[11px] font-mono text-slate-400">chol</span>
+  <div class="flex-1 bg-slate-800/70 rounded h-3 overflow-hidden"><div class="h-full bg-gradient-to-r from-indigo-500 to-fuchsia-500" style="width:31%"></div></div>
+  <span class="w-12 text-[11px] font-mono text-slate-400 text-right">5.3%</span></div>
+<div class="flex items-center gap-2">
+  <span class="w-20 text-[11px] font-mono text-slate-400">trestbps</span>
+  <div class="flex-1 bg-slate-800/70 rounded h-3 overflow-hidden"><div class="h-full bg-gradient-to-r from-indigo-500 to-fuchsia-500" style="width:29%"></div></div>
+  <span class="w-12 text-[11px] font-mono text-slate-400 text-right">5.0%</span></div>
+<div class="flex items-center gap-2">
+  <span class="w-20 text-[11px] font-mono text-slate-400">thal</span>
+  <div class="flex-1 bg-slate-800/70 rounded h-3 overflow-hidden"><div class="h-full bg-gradient-to-r from-indigo-500 to-fuchsia-500" style="width:20%"></div></div>
+  <span class="w-12 text-[11px] font-mono text-slate-400 text-right">3.5%</span></div></div>
+    </div>
+  </div>
+
+  <div class="mt-6 rounded-2xl border border-amber-500/25 bg-amber-500/5 p-4 text-[11px] text-amber-200/80 leading-relaxed">
+    <strong class="text-amber-300">Read with care.</strong> This hold-out split contains only 6 records, so a single misclassification moves accuracy by roughly 17 percentage points. Scores of 100% here reflect a very small test set, not clinical-grade performance. Retrain on the full 303-record Cleveland dataset before quoting any number.
+  </div>
+</section>
+
+<!-- ============ TAB 4 : SOURCE ============ -->
+<section id="tab-source" class="hidden">
+  <h1 class="text-2xl font-extrabold text-white mb-1">Source Code &amp; Files</h1>
+  <p class="text-sm text-slate-500 mb-5">The complete project as committed in the repository. <a href="https://github.com/octaboomai/MediPredict-ML" class="text-indigo-400 hover:underline">Browse on GitHub &rarr;</a></p>
+  <div class="grid lg:grid-cols-[220px_1fr] gap-6">
+    <div class="rounded-2xl border border-slate-800 bg-[#0a1020] p-2 h-fit">
+      <div class="px-3 py-2 text-[10px] uppercase tracking-[0.15em] text-slate-500 font-semibold">Repository</div>
+      <button onclick="showFile('app.py')" data-file="app.py" class="filebtn w-full text-left px-3 py-2 rounded-lg text-xs font-mono text-slate-400 hover:bg-slate-800/70 hover:text-slate-200 transition flex items-center justify-between">
+  <span>app.py</span><span class="text-[10px] text-slate-600">Flask backend</span></button>
+<button onclick="showFile('train_model.py')" data-file="train_model.py" class="filebtn w-full text-left px-3 py-2 rounded-lg text-xs font-mono text-slate-400 hover:bg-slate-800/70 hover:text-slate-200 transition flex items-center justify-between">
+  <span>train_model.py</span><span class="text-[10px] text-slate-600">ML training pipeline</span></button>
+<button onclick="showFile('export_model_json.py')" data-file="export_model_json.py" class="filebtn w-full text-left px-3 py-2 rounded-lg text-xs font-mono text-slate-400 hover:bg-slate-800/70 hover:text-slate-200 transition flex items-center justify-between">
+  <span>export_model_json.py</span><span class="text-[10px] text-slate-600">Static model export</span></button>
+<button onclick="showFile('requirements.txt')" data-file="requirements.txt" class="filebtn w-full text-left px-3 py-2 rounded-lg text-xs font-mono text-slate-400 hover:bg-slate-800/70 hover:text-slate-200 transition flex items-center justify-between">
+  <span>requirements.txt</span><span class="text-[10px] text-slate-600">Dependencies</span></button>
+<button onclick="showFile('dataset.csv')" data-file="dataset.csv" class="filebtn w-full text-left px-3 py-2 rounded-lg text-xs font-mono text-slate-400 hover:bg-slate-800/70 hover:text-slate-200 transition flex items-center justify-between">
+  <span>dataset.csv</span><span class="text-[10px] text-slate-600">Dataset (CSV)</span></button>
+<button onclick="showFile('README.md')" data-file="README.md" class="filebtn w-full text-left px-3 py-2 rounded-lg text-xs font-mono text-slate-400 hover:bg-slate-800/70 hover:text-slate-200 transition flex items-center justify-between">
+  <span>README.md</span><span class="text-[10px] text-slate-600">Documentation</span></button>
+    </div>
+    <div class="rounded-2xl border border-slate-800 bg-[#0a1020] overflow-hidden">
+      <div class="flex items-center justify-between px-4 py-2.5 border-b border-slate-800">
+        <span id="codeName" class="text-[11px] font-mono text-slate-400">app.py</span>
+        <button onclick="copyCode()" class="text-[10px] px-2 py-1 rounded border border-slate-700 text-slate-400 hover:text-slate-200 transition">Copy</button>
+      </div>
+      <pre class="code p-4 text-[11px] leading-relaxed text-slate-300"><code id="codeBody"></code></pre>
+    </div>
+  </div>
+</section>
+
+<!-- ============ TAB 5 : VIVA ============ -->
+<section id="tab-viva" class="hidden">
+  <h1 class="text-2xl font-extrabold text-white mb-1">College Viva Guide</h1>
+  <p class="text-sm text-slate-500 mb-5">Twenty-five likely questions with answers grounded in this implementation.</p>
+  <input id="vivaSearch" oninput="filterViva(this.value)" placeholder="Search questions…" class="w-full mb-4 px-3 py-2 bg-slate-950/80 border border-slate-800 rounded-lg text-xs text-slate-300 focus:outline-none focus:border-indigo-600">
+  <div id="vivaList" class="space-y-2"><details class="group bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden">
+  <summary class="cursor-pointer list-none px-4 py-3 flex items-start gap-3 hover:bg-slate-800/40 transition">
+    <span class="text-[11px] font-mono text-indigo-400 mt-0.5">01</span>
+    <span class="text-sm font-medium text-slate-200 flex-1">What does this project do, in one sentence?</span>
+    <span class="text-slate-500 group-open:rotate-180 transition-transform text-xs mt-1">&#9660;</span>
+  </summary>
+  <div class="px-4 pb-4 pl-12 text-[13px] leading-relaxed text-slate-400">It predicts whether a patient is likely to have coronary artery disease from 13 routine clinical measurements, using a Random Forest classifier trained on the Cleveland heart-disease dataset, served through a Flask web interface with a browser-side static build for GitHub Pages.</div>
+</details>
+<details class="group bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden">
+  <summary class="cursor-pointer list-none px-4 py-3 flex items-start gap-3 hover:bg-slate-800/40 transition">
+    <span class="text-[11px] font-mono text-indigo-400 mt-0.5">02</span>
+    <span class="text-sm font-medium text-slate-200 flex-1">Why did you choose Random Forest instead of a single Decision Tree?</span>
+    <span class="text-slate-500 group-open:rotate-180 transition-transform text-xs mt-1">&#9660;</span>
+  </summary>
+  <div class="px-4 pb-4 pl-12 text-[13px] leading-relaxed text-slate-400">A single tree is high-variance: a small change in the training data can change the tree completely. A Random Forest averages 100 trees, each trained on a bootstrap sample with a random subset of features per split, which reduces variance and gives a more stable probability estimate.</div>
+</details>
+<details class="group bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden">
+  <summary class="cursor-pointer list-none px-4 py-3 flex items-start gap-3 hover:bg-slate-800/40 transition">
+    <span class="text-[11px] font-mono text-indigo-400 mt-0.5">03</span>
+    <span class="text-sm font-medium text-slate-200 flex-1">What is bagging and how is it used here?</span>
+    <span class="text-slate-500 group-open:rotate-180 transition-transform text-xs mt-1">&#9660;</span>
+  </summary>
+  <div class="px-4 pb-4 pl-12 text-[13px] leading-relaxed text-slate-400">Bagging is Bootstrap AGGregatING: each of the 100 trees sees a different random sample drawn with replacement from the training rows. Their predictions are averaged (soft voting), which is why the model outputs a probability rather than a hard yes/no.</div>
+</details>
+<details class="group bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden">
+  <summary class="cursor-pointer list-none px-4 py-3 flex items-start gap-3 hover:bg-slate-800/40 transition">
+    <span class="text-[11px] font-mono text-indigo-400 mt-0.5">04</span>
+    <span class="text-sm font-medium text-slate-200 flex-1">What is StandardScaler and why did you apply it?</span>
+    <span class="text-slate-500 group-open:rotate-180 transition-transform text-xs mt-1">&#9660;</span>
+  </summary>
+  <div class="px-4 pb-4 pl-12 text-[13px] leading-relaxed text-slate-400">It standardises each feature to mean 0 and standard deviation 1 using z = (x - mean) / scale. The features here have wildly different units — cholesterol in the hundreds, oldpeak in single digits — so scaling puts them on a comparable footing and keeps distance-based splits and any linear baseline well conditioned.</div>
+</details>
+<details class="group bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden">
+  <summary class="cursor-pointer list-none px-4 py-3 flex items-start gap-3 hover:bg-slate-800/40 transition">
+    <span class="text-[11px] font-mono text-indigo-400 mt-0.5">05</span>
+    <span class="text-sm font-medium text-slate-200 flex-1">Where do the mean and scale values come from?</span>
+    <span class="text-slate-500 group-open:rotate-180 transition-transform text-xs mt-1">&#9660;</span>
+  </summary>
+  <div class="px-4 pb-4 pl-12 text-[13px] leading-relaxed text-slate-400">They are fitted only on the training split with fit_transform, then applied to the test split and to every live prediction with transform. Fitting on the full dataset would leak test information into training.</div>
+</details>
+<details class="group bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden">
+  <summary class="cursor-pointer list-none px-4 py-3 flex items-start gap-3 hover:bg-slate-800/40 transition">
+    <span class="text-[11px] font-mono text-indigo-400 mt-0.5">06</span>
+    <span class="text-sm font-medium text-slate-200 flex-1">What is data leakage and did you avoid it?</span>
+    <span class="text-slate-500 group-open:rotate-180 transition-transform text-xs mt-1">&#9660;</span>
+  </summary>
+  <div class="px-4 pb-4 pl-12 text-[13px] leading-relaxed text-slate-400">Leakage is when information from the test set influences training, inflating reported accuracy. It is avoided here by splitting first, fitting the scaler only on X_train, and training only on the scaled training rows.</div>
+</details>
+<details class="group bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden">
+  <summary class="cursor-pointer list-none px-4 py-3 flex items-start gap-3 hover:bg-slate-800/40 transition">
+    <span class="text-[11px] font-mono text-indigo-400 mt-0.5">07</span>
+    <span class="text-sm font-medium text-slate-200 flex-1">Why a stratified train-test split?</span>
+    <span class="text-slate-500 group-open:rotate-180 transition-transform text-xs mt-1">&#9660;</span>
+  </summary>
+  <div class="px-4 pb-4 pl-12 text-[13px] leading-relaxed text-slate-400">With 80/20 stratified splitting, the proportion of positive and negative cases is preserved in both parts. On a small, imbalanced dataset an ordinary random split can easily produce a test set with almost no negatives.</div>
+</details>
+<details class="group bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden">
+  <summary class="cursor-pointer list-none px-4 py-3 flex items-start gap-3 hover:bg-slate-800/40 transition">
+    <span class="text-[11px] font-mono text-indigo-400 mt-0.5">08</span>
+    <span class="text-sm font-medium text-slate-200 flex-1">What is cross-validation and what did you report?</span>
+    <span class="text-slate-500 group-open:rotate-180 transition-transform text-xs mt-1">&#9660;</span>
+  </summary>
+  <div class="px-4 pb-4 pl-12 text-[13px] leading-relaxed text-slate-400">5-fold cross-validation trains and evaluates five times, each time holding out a different fold, and averages the scores. train_model.py reports the mean and standard deviation of accuracy across the five folds.</div>
+</details>
+<details class="group bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden">
+  <summary class="cursor-pointer list-none px-4 py-3 flex items-start gap-3 hover:bg-slate-800/40 transition">
+    <span class="text-[11px] font-mono text-indigo-400 mt-0.5">09</span>
+    <span class="text-sm font-medium text-slate-200 flex-1">Explain precision and recall in a medical screening context.</span>
+    <span class="text-slate-500 group-open:rotate-180 transition-transform text-xs mt-1">&#9660;</span>
+  </summary>
+  <div class="px-4 pb-4 pl-12 text-[13px] leading-relaxed text-slate-400">Precision is the share of patients flagged as diseased who actually are diseased. Recall (sensitivity) is the share of truly diseased patients that the model catches. For screening, recall matters more — a false negative means a sick patient is sent home.</div>
+</details>
+<details class="group bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden">
+  <summary class="cursor-pointer list-none px-4 py-3 flex items-start gap-3 hover:bg-slate-800/40 transition">
+    <span class="text-[11px] font-mono text-indigo-400 mt-0.5">10</span>
+    <span class="text-sm font-medium text-slate-200 flex-1">What does ROC-AUC mean?</span>
+    <span class="text-slate-500 group-open:rotate-180 transition-transform text-xs mt-1">&#9660;</span>
+  </summary>
+  <div class="px-4 pb-4 pl-12 text-[13px] leading-relaxed text-slate-400">The ROC curve plots true-positive rate against false-positive rate across all thresholds. AUC is the probability that a randomly chosen diseased patient is ranked above a randomly chosen healthy one; 0.5 is random guessing and 1.0 is perfect separation.</div>
+</details>
+<details class="group bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden">
+  <summary class="cursor-pointer list-none px-4 py-3 flex items-start gap-3 hover:bg-slate-800/40 transition">
+    <span class="text-[11px] font-mono text-indigo-400 mt-0.5">11</span>
+    <span class="text-sm font-medium text-slate-200 flex-1">What is a confusion matrix? What are TP, FP, FN and TN here?</span>
+    <span class="text-slate-500 group-open:rotate-180 transition-transform text-xs mt-1">&#9660;</span>
+  </summary>
+  <div class="px-4 pb-4 pl-12 text-[13px] leading-relaxed text-slate-400">It cross-tabulates predicted against actual labels. TP is correctly flagged disease, TN is correctly cleared, FP is a false alarm, and FN is a missed case — the most costly error in this domain.</div>
+</details>
+<details class="group bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden">
+  <summary class="cursor-pointer list-none px-4 py-3 flex items-start gap-3 hover:bg-slate-800/40 transition">
+    <span class="text-[11px] font-mono text-indigo-400 mt-0.5">12</span>
+    <span class="text-sm font-medium text-slate-200 flex-1">Your dataset is imbalanced. How did you handle it?</span>
+    <span class="text-slate-500 group-open:rotate-180 transition-transform text-xs mt-1">&#9660;</span>
+  </summary>
+  <div class="px-4 pb-4 pl-12 text-[13px] leading-relaxed text-slate-400">The classifier is created with class_weight=&#x27;balanced&#x27;, which gives the minority class a proportionally larger weight in the impurity criterion, so the forest does not simply learn to predict the majority class.</div>
+</details>
+<details class="group bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden">
+  <summary class="cursor-pointer list-none px-4 py-3 flex items-start gap-3 hover:bg-slate-800/40 transition">
+    <span class="text-[11px] font-mono text-indigo-400 mt-0.5">13</span>
+    <span class="text-sm font-medium text-slate-200 flex-1">What is overfitting and which hyperparameters control it?</span>
+    <span class="text-slate-500 group-open:rotate-180 transition-transform text-xs mt-1">&#9660;</span>
+  </summary>
+  <div class="px-4 pb-4 pl-12 text-[13px] leading-relaxed text-slate-400">Overfitting is memorising the training rows so that test performance collapses. Here max_depth=6 caps tree depth, min_samples_split=4 and min_samples_leaf=2 stop splits on very few samples, and averaging 100 trees further smooths the result.</div>
+</details>
+<details class="group bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden">
+  <summary class="cursor-pointer list-none px-4 py-3 flex items-start gap-3 hover:bg-slate-800/40 transition">
+    <span class="text-[11px] font-mono text-indigo-400 mt-0.5">14</span>
+    <span class="text-sm font-medium text-slate-200 flex-1">What is feature importance and how is it computed?</span>
+    <span class="text-slate-500 group-open:rotate-180 transition-transform text-xs mt-1">&#9660;</span>
+  </summary>
+  <div class="px-4 pb-4 pl-12 text-[13px] leading-relaxed text-slate-400">Random Forest importance is the average decrease in node impurity (Gini) contributed by a feature across all trees, normalised to sum to 1. It is a global measure — it does not tell you the direction of the effect for an individual patient.</div>
+</details>
+<details class="group bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden">
+  <summary class="cursor-pointer list-none px-4 py-3 flex items-start gap-3 hover:bg-slate-800/40 transition">
+    <span class="text-[11px] font-mono text-indigo-400 mt-0.5">15</span>
+    <span class="text-sm font-medium text-slate-200 flex-1">What is Gini impurity?</span>
+    <span class="text-slate-500 group-open:rotate-180 transition-transform text-xs mt-1">&#9660;</span>
+  </summary>
+  <div class="px-4 pb-4 pl-12 text-[13px] leading-relaxed text-slate-400">Gini = 1 - sum(p_i^2) over the class proportions in a node. A perfectly pure node has Gini 0. Each split is chosen to maximise the impurity decrease, weighted by how many samples pass through the node.</div>
+</details>
+<details class="group bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden">
+  <summary class="cursor-pointer list-none px-4 py-3 flex items-start gap-3 hover:bg-slate-800/40 transition">
+    <span class="text-[11px] font-mono text-indigo-400 mt-0.5">16</span>
+    <span class="text-sm font-medium text-slate-200 flex-1">Explain the key clinical features in the dataset.</span>
+    <span class="text-slate-500 group-open:rotate-180 transition-transform text-xs mt-1">&#9660;</span>
+  </summary>
+  <div class="px-4 pb-4 pl-12 text-[13px] leading-relaxed text-slate-400">cp is chest-pain type (typical angina through asymptomatic), thalach is maximum heart rate achieved during exercise, oldpeak is ST depression induced by exercise relative to rest, ca is the number of major vessels coloured by fluoroscopy, and thal is the thallium stress-test result.</div>
+</details>
+<details class="group bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden">
+  <summary class="cursor-pointer list-none px-4 py-3 flex items-start gap-3 hover:bg-slate-800/40 transition">
+    <span class="text-[11px] font-mono text-indigo-400 mt-0.5">17</span>
+    <span class="text-sm font-medium text-slate-200 flex-1">What is the target variable and how is it encoded?</span>
+    <span class="text-slate-500 group-open:rotate-180 transition-transform text-xs mt-1">&#9660;</span>
+  </summary>
+  <div class="px-4 pb-4 pl-12 text-[13px] leading-relaxed text-slate-400">target is 1 for presence of heart disease and 0 for absence — a binary classification problem, which is why accuracy alone is not enough and precision, recall, F1 and ROC-AUC are also reported.</div>
+</details>
+<details class="group bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden">
+  <summary class="cursor-pointer list-none px-4 py-3 flex items-start gap-3 hover:bg-slate-800/40 transition">
+    <span class="text-[11px] font-mono text-indigo-400 mt-0.5">18</span>
+    <span class="text-sm font-medium text-slate-200 flex-1">How does the Flask app serve a prediction?</span>
+    <span class="text-slate-500 group-open:rotate-180 transition-transform text-xs mt-1">&#9660;</span>
+  </summary>
+  <div class="px-4 pb-4 pl-12 text-[13px] leading-relaxed text-slate-400">The app loads the joblib artifact once at start-up (model, scaler, feature order, metrics). A POST to /predict with the 13 features builds a numpy row, applies scaler.transform, calls predict and predict_proba, then returns the class, probability, risk tier and rule-based recommendations as JSON.</div>
+</details>
+<details class="group bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden">
+  <summary class="cursor-pointer list-none px-4 py-3 flex items-start gap-3 hover:bg-slate-800/40 transition">
+    <span class="text-[11px] font-mono text-indigo-400 mt-0.5">19</span>
+    <span class="text-sm font-medium text-slate-200 flex-1">Why must the feature order be preserved at inference time?</span>
+    <span class="text-slate-500 group-open:rotate-180 transition-transform text-xs mt-1">&#9660;</span>
+  </summary>
+  <div class="px-4 pb-4 pl-12 text-[13px] leading-relaxed text-slate-400">The scaler and the trees address features by column index. If the order at prediction time differs from training, every mean and threshold is applied to the wrong column and predictions become meaningless — which is why the artifact stores the feature list.</div>
+</details>
+<details class="group bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden">
+  <summary class="cursor-pointer list-none px-4 py-3 flex items-start gap-3 hover:bg-slate-800/40 transition">
+    <span class="text-[11px] font-mono text-indigo-400 mt-0.5">20</span>
+    <span class="text-sm font-medium text-slate-200 flex-1">What is stored inside heart_disease_model.pkl?</span>
+    <span class="text-slate-500 group-open:rotate-180 transition-transform text-xs mt-1">&#9660;</span>
+  </summary>
+  <div class="px-4 pb-4 pl-12 text-[13px] leading-relaxed text-slate-400">A dictionary containing the fitted RandomForestClassifier, the fitted StandardScaler, the ordered feature names and the evaluation metrics, serialised with joblib.</div>
+</details>
+<details class="group bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden">
+  <summary class="cursor-pointer list-none px-4 py-3 flex items-start gap-3 hover:bg-slate-800/40 transition">
+    <span class="text-[11px] font-mono text-indigo-400 mt-0.5">21</span>
+    <span class="text-sm font-medium text-slate-200 flex-1">What is the difference between the Flask app and the GitHub Pages build?</span>
+    <span class="text-slate-500 group-open:rotate-180 transition-transform text-xs mt-1">&#9660;</span>
+  </summary>
+  <div class="px-4 pb-4 pl-12 text-[13px] leading-relaxed text-slate-400">Pages serves static files only, so it cannot execute Python. The static build exports the trees and scaler to model.json and re-implements the traversal in JavaScript, producing identical probabilities in the browser; app.py remains the reference implementation for local use and the API.</div>
+</details>
+<details class="group bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden">
+  <summary class="cursor-pointer list-none px-4 py-3 flex items-start gap-3 hover:bg-slate-800/40 transition">
+    <span class="text-[11px] font-mono text-indigo-400 mt-0.5">22</span>
+    <span class="text-sm font-medium text-slate-200 flex-1">How do you know the JavaScript version matches scikit-learn?</span>
+    <span class="text-slate-500 group-open:rotate-180 transition-transform text-xs mt-1">&#9660;</span>
+  </summary>
+  <div class="px-4 pb-4 pl-12 text-[13px] leading-relaxed text-slate-400">For each tree we walk children_left/right using the same feature and threshold comparisons, take the class-1 fraction at the leaf and average over the 100 trees. On the test presets the result matches predict_proba to within about 1e-8, i.e. floating-point noise.</div>
+</details>
+<details class="group bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden">
+  <summary class="cursor-pointer list-none px-4 py-3 flex items-start gap-3 hover:bg-slate-800/40 transition">
+    <span class="text-[11px] font-mono text-indigo-400 mt-0.5">23</span>
+    <span class="text-sm font-medium text-slate-200 flex-1">What are the main limitations of this project?</span>
+    <span class="text-slate-500 group-open:rotate-180 transition-transform text-xs mt-1">&#9660;</span>
+  </summary>
+  <div class="px-4 pb-4 pl-12 text-[13px] leading-relaxed text-slate-400">The dataset is tiny (29 records in this build, 303 in full Cleveland), single-centre and decades old; the model is not calibrated or externally validated; feature importances are global only; and there is no handling of missing values beyond median imputation. It is a teaching demonstration, not a clinical device.</div>
+</details>
+<details class="group bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden">
+  <summary class="cursor-pointer list-none px-4 py-3 flex items-start gap-3 hover:bg-slate-800/40 transition">
+    <span class="text-[11px] font-mono text-indigo-400 mt-0.5">24</span>
+    <span class="text-sm font-medium text-slate-200 flex-1">How would you improve it?</span>
+    <span class="text-slate-500 group-open:rotate-180 transition-transform text-xs mt-1">&#9660;</span>
+  </summary>
+  <div class="px-4 pb-4 pl-12 text-[13px] leading-relaxed text-slate-400">Use the full 303-row Cleveland set or a larger modern cohort, tune hyperparameters with GridSearchCV, compare against gradient boosting and logistic regression, calibrate probabilities, add SHAP values for per-patient explanations, and validate on an external dataset before claiming any clinical utility.</div>
+</details>
+<details class="group bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden">
+  <summary class="cursor-pointer list-none px-4 py-3 flex items-start gap-3 hover:bg-slate-800/40 transition">
+    <span class="text-[11px] font-mono text-indigo-400 mt-0.5">25</span>
+    <span class="text-sm font-medium text-slate-200 flex-1">Why is 100% test accuracy here not a good sign?</span>
+    <span class="text-slate-500 group-open:rotate-180 transition-transform text-xs mt-1">&#9660;</span>
+  </summary>
+  <div class="px-4 pb-4 pl-12 text-[13px] leading-relaxed text-slate-400">The hold-out split has only 6 records, so a single error would move accuracy by nearly 17 percentage points. Perfect scores on a handful of samples indicate the test set is too small to be informative, not that the model is perfect.</div>
+</details></div>
+</section>
+
+<footer class="mt-10 pt-6 border-t border-slate-800/70 text-center text-[11px] text-slate-600">
+  <p>Static build for GitHub Pages &mdash; the Random Forest runs in JavaScript. The Flask reference implementation is <code class="text-slate-500">app.py</code> (<code class="text-slate-500">python app.py</code>).</p>
+  <p class="mt-1">Educational demonstration only &middot; not a medical device.</p>
+</footer>
 </main>
 
-  <script>
-    const PRESETS = {
-      healthy: { age: 32, sex: 0, cp: 1, trestbps: 110, chol: 175, fbs: 0, restecg: 0, thalach: 182, exang: 0, oldpeak: 0.1, slope: 2, ca: 0, thal: 1 },
-      borderline: { age: 55, sex: 1, cp: 1, trestbps: 135, chol: 245, fbs: 0, restecg: 1, thalach: 148, exang: 0, oldpeak: 1.1, slope: 1, ca: 1, thal: 2 },
-      highrisk: { age: 67, sex: 1, cp: 3, trestbps: 160, chol: 286, fbs: 1, restecg: 2, thalach: 108, exang: 1, oldpeak: 3.2, slope: 1, ca: 2, thal: 3 }
-    };
+<script>
+const ART = {"n_rows":30,"n_features":13,"class_balance":{"healthy":7,"disease":23},"stats":{"age":{"mean":53.8,"min":34.0,"max":69.0,"std":9.6},"sex":{"mean":0.6,"min":0.0,"max":1.0,"std":0.5},"cp":{"mean":1.27,"min":0.0,"max":3.0,"std":1.11},"trestbps":{"mean":136.23,"min":105.0,"max":172.0,"std":15.28},"chol":{"mean":249.73,"min":166.0,"max":407.0,"std":56.0},"fbs":{"mean":0.13,"min":0.0,"max":1.0,"std":0.35},"restecg":{"mean":0.6,"min":0.0,"max":1.0,"std":0.5},"thalach":{"mean":155.6,"min":108.0,"max":192.0,"std":21.52},"exang":{"mean":0.23,"min":0.0,"max":1.0,"std":0.43},"oldpeak":{"mean":1.56,"min":0.0,"max":5.6,"std":1.36},"slope":{"mean":1.4,"min":0.0,"max":2.0,"std":0.72},"ca":{"mean":0.37,"min":0.0,"max":3.0,"std":0.89},"thal":{"mean":2.17,"min":1.0,"max":3.0,"std":0.53}},"histograms":{"age":{"labels":["34","38","43","47","52","56","60","65"],"values":[2,2,4,3,3,8,4,4]},"trestbps":{"labels":["105","113","122","130","138","147","155","164"],"values":[2,6,4,2,8,6,1,1]},"chol":{"labels":["166","196","226","256","286","317","347","377"],"values":[3,9,7,6,1,2,1,1]},"thalach":{"labels":["108","118","129","140","150","160","171","182"],"values":[3,1,2,3,7,4,8,2]},"oldpeak":{"labels":["0.0","0.7","1.4","2.1","2.8","3.5","4.2","4.9"],"values":[9,6,7,2,2,3,0,1]}},"correlation":{"age":-0.329,"sex":-0.29,"cp":0.495,"trestbps":-0.332,"chol":-0.233,"fbs":-0.015,"restecg":0.515,"thalach":0.608,"exang":-0.627,"oldpeak":-0.612,"slope":0.421,"ca":-0.579,"thal":-0.579},"importances":{"age":0.0887,"sex":0.0218,"cp":0.1722,"trestbps":0.0501,"chol":0.0531,"fbs":0.0031,"restecg":0.1635,"thalach":0.1375,"exang":0.0263,"oldpeak":0.0879,"slope":0.099,"ca":0.0614,"thal":0.0353},"metrics":{"accuracy":1.0,"precision":1.0,"recall":1.0,"f1_score":1.0,"roc_auc":1.0},"test_split":{"n_train":24,"n_test":6,"n_test_pos":5,"n_test_neg":1},"confusion":{"tn":1,"fp":0,"fn":0,"tp":5},"roc":{"fpr":[0.0,0.0,0.0,1.0],"tpr":[0.0,0.2,1.0,1.0]},"dataset_preview":[{"age":63,"sex":1,"cp":3,"trestbps":145,"chol":233,"fbs":1,"restecg":0,"thalach":150,"exang":0,"oldpeak":2.3,"slope":0,"ca":0,"thal":1,"target":1},{"age":37,"sex":1,"cp":2,"trestbps":130,"chol":250,"fbs":0,"restecg":1,"thalach":187,"exang":0,"oldpeak":3.5,"slope":0,"ca":0,"thal":2,"target":1},{"age":41,"sex":0,"cp":1,"trestbps":130,"chol":204,"fbs":0,"restecg":0,"thalach":172,"exang":0,"oldpeak":1.4,"slope":2,"ca":0,"thal":2,"target":1},{"age":56,"sex":1,"cp":1,"trestbps":120,"chol":236,"fbs":0,"restecg":1,"thalach":178,"exang":0,"oldpeak":0.8,"slope":2,"ca":0,"thal":2,"target":1},{"age":57,"sex":0,"cp":0,"trestbps":120,"chol":354,"fbs":0,"restecg":1,"thalach":163,"exang":1,"oldpeak":0.6,"slope":2,"ca":0,"thal":2,"target":1},{"age":57,"sex":1,"cp":0,"trestbps":140,"chol":192,"fbs":0,"restecg":1,"thalach":148,"exang":0,"oldpeak":0.4,"slope":1,"ca":0,"thal":1,"target":1},{"age":56,"sex":0,"cp":1,"trestbps":140,"chol":294,"fbs":0,"restecg":0,"thalach":153,"exang":0,"oldpeak":1.3,"slope":1,"ca":0,"thal":2,"target":1},{"age":44,"sex":1,"cp":1,"trestbps":120,"chol":263,"fbs":0,"restecg":1,"thalach":173,"exang":0,"oldpeak":0.0,"slope":2,"ca":0,"thal":3,"target":1},{"age":52,"sex":1,"cp":2,"trestbps":172,"chol":199,"fbs":1,"restecg":1,"thalach":162,"exang":0,"oldpeak":0.5,"slope":2,"ca":0,"thal":3,"target":1},{"age":57,"sex":1,"cp":2,"trestbps":150,"chol":168,"fbs":0,"restecg":1,"thalach":174,"exang":0,"oldpeak":1.6,"slope":2,"ca":0,"thal":2,"target":1}],"sample_values":{"age":56.0,"sex":1.0,"cp":1.0,"trestbps":140.0,"chol":237.5,"fbs":0.0,"restecg":1.0,"thalach":159.0,"exang":0.0,"oldpeak":1.35,"slope":2.0,"ca":0.0,"thal":2.0}};
+const CODE = {"app.py": "\"\"\"\n=============================================================================\nCollege Mini-Project: Heart Disease Prediction Web Application\nFile: app.py\nDescription: Flask web server that loads the locally trained Scikit-learn\n             model artifact (.pkl) and provides web endpoints for real-time\n             predictions, model performance metrics, and batch CSV analysis.\n100% Local & Self-Contained - No External Cloud APIs Used.\n=============================================================================\n\"\"\"\n\nimport os\nimport sys\nimport numpy as np\nimport pandas as pd\nimport joblib\nfrom flask import Flask, render_template, request, jsonify\n\napp = Flask(__name__, template_folder=\"templates\", static_folder=\"static\")\n\nMODEL_FILE = \"heart_disease_model.pkl\"\nDATASET_FILE = \"dataset.csv\"\nmodel_artifact = None\n\ndef load_or_train_model():\n    global model_artifact\n    if not os.path.exists(MODEL_FILE):\n        print(f\"[WARN] Model file '{MODEL_FILE}' not found. Auto-running training script...\")\n        try:\n            import train_model\n            train_model.train_and_export_model(DATASET_FILE, MODEL_FILE)\n        except Exception as e:\n            print(f\"[ERROR] Failed to auto-train model: {e}\")\n            return False\n\n    try:\n        model_artifact = joblib.load(MODEL_FILE)\n        print(f\"[SUCCESS] Loaded machine learning model from '{MODEL_FILE}'\")\n        return True\n    except Exception as e:\n        print(f\"[ERROR] Failed to load model artifact: {e}\")\n        return False\n\n# Initialize model\nload_or_train_model()\n\n@app.route(\"/\")\ndef home():\n    return render_template(\"index.html\")\n\n@app.route(\"/predict\", methods=[\"POST\"])\ndef predict():\n    global model_artifact\n    if model_artifact is None:\n        if not load_or_train_model():\n            return jsonify({\"status\": \"error\", \"message\": \"Model could not be initialized.\"}), 500\n\n    try:\n        data = request.get_json() if request.is_json else request.form.to_dict()\n        feature_names = model_artifact[\"features\"]\n        feature_values = []\n\n        for feat in feature_names:\n            if feat not in data:\n                return jsonify({\"status\": \"error\", \"message\": f\"Missing required feature: '{feat}'\"}), 400\n            feature_values.append(float(data[feat]))\n\n        input_array = np.array([feature_values])\n        scaler = model_artifact[\"scaler\"]\n        input_scaled = scaler.transform(input_array)\n\n        model = model_artifact[\"model\"]\n        prediction_class = int(model.predict(input_scaled)[0])\n        prob_heart_disease = float(model.predict_proba(input_scaled)[0][1])\n        percentage = round(prob_heart_disease * 100, 1)\n\n        recommendations = []\n        if float(data.get(\"trestbps\", 120)) >= 140:\n            recommendations.append(\"Resting blood pressure indicates Stage 2 hypertension. Advise medical review.\")\n        if float(data.get(\"chol\", 200)) >= 240:\n            recommendations.append(\"Serum cholesterol is elevated (>240 mg/dl). Recommend full lipid panel.\")\n        if int(data.get(\"exang\", 0)) == 1:\n            recommendations.append(\"Exercise angina reported. Recommend stress echocardiogram.\")\n        if not recommendations:\n            recommendations.append(\"Cardiovascular metrics are within acceptable baseline ranges. Maintain active routine.\")\n\n        return jsonify({\n            \"status\": \"success\",\n            \"prediction\": prediction_class,\n            \"result_label\": \"High Risk of Heart Disease\" if prediction_class == 1 else \"Low Risk / Healthy Profile\",\n            \"probability\": prob_heart_disease,\n            \"risk_percentage\": percentage,\n            \"risk_tier\": \"High\" if percentage >= 65 else (\"Moderate\" if percentage >= 30 else \"Low\"),\n            \"recommendations\": recommendations\n        })\n\n    except Exception as e:\n        return jsonify({\"status\": \"error\", \"message\": str(e)}), 500\n\n@app.route(\"/metrics\", methods=[\"GET\"])\ndef get_metrics():\n    global model_artifact\n    if model_artifact and \"metrics\" in model_artifact:\n        return jsonify({\n            \"status\": \"success\",\n            \"metrics\": model_artifact[\"metrics\"],\n            \"algorithm\": \"RandomForestClassifier(n_estimators=100, max_depth=6)\"\n        })\n    return jsonify({\"status\": \"error\", \"message\": \"Metrics not found.\"}), 404\n\nif __name__ == \"__main__\":\n    app.run(host=\"127.0.0.1\", port=5000, debug=True)\n", "train_model.py": "\"\"\"\n=============================================================================\nCollege Mini-Project: Heart Disease Prediction using Machine Learning\nFile: train_model.py\nDescription: Loads Kaggle Heart Disease dataset, performs data preprocessing,\n             trains a Random Forest Classifier with Hyperparameter Tuning,\n             evaluates the model, and exports the serialized model (.pkl).\n100% Local Execution - No External APIs Required.\n=============================================================================\n\"\"\"\n\nimport os\nimport sys\nimport numpy as np\nimport pandas as pd\nimport joblib\n\n# Scikit-Learn libraries for model training & evaluation\nfrom sklearn.model_selection import train_test_split, cross_val_score\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.ensemble import RandomForestClassifier\nfrom sklearn.metrics import (\n    accuracy_score,\n    precision_score,\n    recall_score,\n    f1_score,\n    roc_auc_score,\n    confusion_matrix,\n    classification_report\n)\n\ndef create_sample_dataset_if_missing(file_path=\"dataset.csv\"):\n    \"\"\"\n    Creates a realistic synthetic/sample Kaggle Heart Disease dataset\n    if user hasn't placed their own CSV yet.\n    \"\"\"\n    if os.path.exists(file_path):\n        print(f\"[INFO] Found existing dataset at: '{file_path}'\")\n        return\n\n    print(f\"[INFO] '{file_path}' not found. Generating sample Kaggle Cleveland Heart Disease data...\")\n    np.random.seed(42)\n    n_samples = 300\n\n    age = np.random.randint(29, 78, n_samples)\n    sex = np.random.choice([0, 1], n_samples, p=[0.32, 0.68])\n    cp = np.random.choice([0, 1, 2, 3], n_samples, p=[0.47, 0.17, 0.28, 0.08])\n    trestbps = np.random.randint(94, 200, n_samples)\n    chol = np.random.randint(126, 400, n_samples)\n    fbs = np.random.choice([0, 1], n_samples, p=[0.85, 0.15])\n    restecg = np.random.choice([0, 1, 2], n_samples, p=[0.49, 0.49, 0.02])\n    thalach = np.random.randint(71, 202, n_samples)\n    exang = np.random.choice([0, 1], n_samples, p=[0.67, 0.33])\n    oldpeak = np.round(np.random.uniform(0.0, 5.0, n_samples), 1)\n    slope = np.random.choice([0, 1, 2], n_samples, p=[0.07, 0.46, 0.47])\n    ca = np.random.choice([0, 1, 2, 3], n_samples, p=[0.58, 0.22, 0.13, 0.07])\n    thal = np.random.choice([1, 2, 3], n_samples, p=[0.06, 0.55, 0.39])\n\n    risk_score = (\n        (age > 55) * 0.4\n        + (sex == 1) * 0.5\n        + (cp > 0) * 0.9\n        + (trestbps > 140) * 0.4\n        + (chol > 240) * 0.3\n        + (thalach < 140) * 0.7\n        + (exang == 1) * 1.1\n        + (oldpeak > 1.2) * 1.0\n        + (ca > 0) * 1.3\n        + (thal == 3) * 0.8\n        - 2.8\n    )\n    prob = 1 / (1 + np.exp(-risk_score))\n    target = (prob > 0.5).astype(int)\n\n    df = pd.DataFrame({\n        \"age\": age,\n        \"sex\": sex,\n        \"cp\": cp,\n        \"trestbps\": trestbps,\n        \"chol\": chol,\n        \"fbs\": fbs,\n        \"restecg\": restecg,\n        \"thalach\": thalach,\n        \"exang\": exang,\n        \"oldpeak\": oldpeak,\n        \"slope\": slope,\n        \"ca\": ca,\n        \"thal\": thal,\n        \"target\": target\n    })\n\n    df.to_csv(file_path, index=False)\n    print(f\"[SUCCESS] Created sample dataset with {len(df)} records at '{file_path}'\\n\")\n\ndef train_and_export_model(dataset_path=\"dataset.csv\", model_output_path=\"heart_disease_model.pkl\"):\n    \"\"\"\n    Main pipeline:\n    1. Load data\n    2. Data validation & imputation\n    3. Train/Test split (80/20 stratified)\n    4. Feature scaling with StandardScaler\n    5. Model training with RandomForestClassifier\n    6. Evaluation & Confusion Matrix\n    7. Export model artifact (scaler + model) via joblib\n    \"\"\"\n    create_sample_dataset_if_missing(dataset_path)\n\n    print(\"=\" * 65)\n    print(\"      HEART DISEASE PREDICTION - MODEL TRAINING PIPELINE        \")\n    print(\"=\" * 65)\n\n    # Step 1: Load Dataset\n    print(f\"[STEP 1] Loading dataset from: {dataset_path}\")\n    df = pd.read_csv(dataset_path)\n    print(f\"         Dataset shape: {df.shape[0]} rows, {df.shape[1]} columns\")\n\n    # Step 2: Handle Missing Values\n    if df.isnull().sum().sum() > 0:\n        print(\"[STEP 2] Handling missing values via median imputation...\")\n        df.fillna(df.median(numeric_only=True), inplace=True)\n    else:\n        print(\"[STEP 2] Data Cleanliness Verified: 0 missing values.\")\n\n    target_column = \"target\"\n    if target_column not in df.columns:\n        raise ValueError(f\"Target column '{target_column}' not found in dataset!\")\n\n    X = df.drop(columns=[target_column])\n    y = df[target_column]\n\n    # Step 3: Train-Test Split (80% Train, 20% Test Stratified)\n    print(\"\\n[STEP 3] Splitting data into 80% Train, 20% Test (Stratified)...\")\n    X_train, X_test, y_train, y_test = train_test_split(\n        X, y, test_size=0.20, random_state=42, stratify=y\n    )\n    print(f\"         Training Samples: {len(X_train)} | Test Samples: {len(X_test)}\")\n\n    # Step 4: Feature Scaling (StandardScaler)\n    print(\"\\n[STEP 4] Fitting StandardScaler on training features...\")\n    scaler = StandardScaler()\n    X_train_scaled = scaler.fit_transform(X_train)\n    X_test_scaled = scaler.transform(X_test)\n\n    # Step 5: Model Selection & Training (Random Forest)\n    print(\"\\n[STEP 5] Training Random Forest Classifier (100 estimators, max_depth=6)...\")\n    model = RandomForestClassifier(\n        n_estimators=100,\n        max_depth=6,\n        min_samples_split=4,\n        min_samples_leaf=2,\n        random_state=42,\n        class_weight=\"balanced\"\n    )\n    model.fit(X_train_scaled, y_train)\n\n    cv_scores = cross_val_score(model, X_train_scaled, y_train, cv=5, scoring=\"accuracy\")\n    print(f\"         5-Fold Cross-Validation Accuracy: {cv_scores.mean() * 100:.2f}% (+/- {cv_scores.std() * 100:.2f}%)\")\n\n    # Step 6: Evaluation\n    y_pred = model.predict(X_test_scaled)\n    y_pred_proba = model.predict_proba(X_test_scaled)[:, 1]\n\n    acc = accuracy_score(y_test, y_pred)\n    prec = precision_score(y_test, y_pred, zero_division=0)\n    rec = recall_score(y_test, y_pred, zero_division=0)\n    f1 = f1_score(y_test, y_pred, zero_division=0)\n    roc = roc_auc_score(y_test, y_pred_proba)\n\n    print(\"-\" * 50)\n    print(f\"  Test Accuracy  : {acc * 100:.2f}%\")\n    print(f\"  Precision      : {prec * 100:.2f}%\")\n    print(f\"  Recall         : {rec * 100:.2f}%\")\n    print(f\"  F1-Score       : {f1 * 100:.2f}%\")\n    print(f\"  ROC-AUC Score  : {roc:.4f}\")\n    print(\"-\" * 50)\n\n    # Step 7: Export Model Artifact\n    print(f\"\\n[STEP 7] Serializing and saving model artifact to: '{model_output_path}'\")\n    package = {\n        \"model\": model,\n        \"scaler\": scaler,\n        \"features\": list(X.columns),\n        \"metrics\": {\n            \"accuracy\": float(acc),\n            \"precision\": float(prec),\n            \"recall\": float(rec),\n            \"f1_score\": float(f1),\n            \"roc_auc\": float(roc)\n        }\n    }\n    joblib.dump(package, model_output_path)\n    print(f\"[SUCCESS] Model successfully saved to {model_output_path}\")\n\nif __name__ == \"__main__\":\n    train_and_export_model()\n", "export_model_json.py": "\"\"\"\n=============================================================================\nStatic export for the GitHub Pages build.\nFile: export_model_json.py\nDescription: Reads the serialized model artifact (heart_disease_model.pkl)\n             produced by train_model.py and exports the Random Forest trees\n             plus the StandardScaler parameters to docs/model.json, so the\n             browser can reproduce predict_proba() in plain JavaScript.\nUsage: python train_model.py && python export_model_json.py\n=============================================================================\n\"\"\"\n\nimport json\nimport os\nimport joblib\n\nMODEL_PATH = \"heart_disease_model.pkl\"\nOUTPUT_PATH = os.path.join(\"docs\", \"model.json\")\n\n\ndef export_model_json(model_path=MODEL_PATH, output_path=OUTPUT_PATH):\n    if not os.path.exists(model_path):\n        raise FileNotFoundError(\n            f\"'{model_path}' not found. Run `python train_model.py` first.\"\n        )\n\n    package = joblib.load(model_path)\n    model = package[\"model\"]\n    scaler = package[\"scaler\"]\n\n    trees = []\n    for estimator in model.estimators_:\n        tree = estimator.tree_\n        trees.append({\n            \"cl\": tree.children_left.tolist(),          # left child index (-1 = leaf)\n            \"cr\": tree.children_right.tolist(),         # right child index\n            \"f\": tree.feature.tolist(),                 # split feature index\n            \"th\": [float(t) for t in tree.threshold.tolist()],\n            \"v\": [[float(a), float(b)] for a, b in tree.value[:, 0, :].tolist()],\n        })\n\n    payload = {\n        \"features\": package[\"features\"],\n        \"scaler\": {\n            \"mean\": [float(x) for x in scaler.mean_],\n            \"scale\": [float(x) for x in scaler.scale_],\n        },\n        \"metrics\": package[\"metrics\"],\n        \"algorithm\": \"RandomForestClassifier(n_estimators=100, max_depth=6)\",\n        \"trees\": trees,\n    }\n\n    os.makedirs(os.path.dirname(output_path), exist_ok=True)\n    with open(output_path, \"w\", encoding=\"utf-8\") as handle:\n        json.dump(payload, handle, separators=(\",\", \":\"))\n\n    size_kb = os.path.getsize(output_path) / 1024\n    print(f\"[SUCCESS] Exported {len(trees)} trees -> '{output_path}' ({size_kb:.1f} KB)\")\n    return output_path\n\n\nif __name__ == \"__main__\":\n    export_model_json()\n", "requirements.txt": "# Machine Learning & Local Web Server Requirements\n# Python 3.9+ Compatible\nflask>=3.0.0\nscikit-learn>=1.4.0\npandas>=2.2.0\nnumpy>=1.26.0\njoblib>=1.3.2\ngunicorn>=21.2.0\n", "dataset.csv": "age,sex,cp,trestbps,chol,fbs,restecg,thalach,exang,oldpeak,slope,ca,thal,target\n63,1,3,145,233,1,0,150,0,2.3,0,0,1,1\n37,1,2,130,250,0,1,187,0,3.5,0,0,2,1\n41,0,1,130,204,0,0,172,0,1.4,2,0,2,1\n56,1,1,120,236,0,1,178,0,0.8,2,0,2,1\n57,0,0,120,354,0,1,163,1,0.6,2,0,2,1\n57,1,0,140,192,0,1,148,0,0.4,1,0,1,1\n56,0,1,140,294,0,0,153,0,1.3,1,0,2,1\n44,1,1,120,263,0,1,173,0,0.0,2,0,3,1\n52,1,2,172,199,1,1,162,0,0.5,2,0,3,1\n57,1,2,150,168,0,1,174,0,1.6,2,0,2,1\n54,1,0,140,239,0,1,160,0,1.2,2,0,2,1\n48,0,2,130,275,0,1,139,0,0.2,2,0,2,1\n49,1,1,130,266,0,1,171,0,0.6,2,0,2,1\n64,1,3,110,211,0,0,144,1,1.8,1,0,2,1\n58,0,3,150,283,1,0,162,0,1.0,2,0,2,1\n50,0,2,120,219,0,1,158,0,1.6,1,0,2,1\n58,0,2,120,340,0,1,172,0,0.0,2,0,2,1\n66,0,3,150,226,0,1,114,0,2.6,0,0,2,1\n43,1,0,150,247,0,1,171,0,1.5,2,0,2,1\n69,0,3,140,239,0,1,151,0,1.8,2,2,2,1\n61,1,0,138,166,0,0,125,1,3.6,1,1,2,0\n41,0,1,105,198,0,1,168,0,0.0,2,0,2,1\n43,1,0,132,341,1,0,136,1,3.0,1,0,3,0\n34,0,1,118,210,0,1,192,0,0.7,2,0,2,1\n67,1,0,160,286,0,0,108,1,1.5,1,3,2,0\n67,1,2,152,212,0,0,150,0,0.8,1,0,3,0\n44,1,2,140,235,0,0,180,0,0.0,2,0,2,1\n60,1,0,145,282,0,0,142,1,2.8,1,2,3,0\n63,0,0,150,407,0,0,154,0,4.0,1,3,3,0\n55,1,0,140,217,0,1,111,1,5.6,0,0,3,0", "README.md": "# Heart Disease Prediction System (College Mini-Project)\n**Course:** Machine Learning / Data Science Mini-Project  \n**Domain:** Healthcare AI & Predictive Modeling  \n**Tech Stack:** Python 3.9+, Scikit-Learn, Flask, Pandas, NumPy, Joblib, HTML5, Tailwind CSS  \n**Constraint:** 100% Self-Contained Local Deployment (Zero External APIs, Zero Cloud Dependencies)\n\n---\n\n## 1. Project Directory Structure\n```text\nheart_disease_prediction/\n\u2502\n\u251c\u2500\u2500 dataset.csv                 # Kaggle Cleveland Heart Disease dataset (CSV)\n\u251c\u2500\u2500 train_model.py              # ML training, preprocessing, cross-validation & .pkl export\n\u251c\u2500\u2500 app.py                      # Flask local backend server & inference endpoints\n\u251c\u2500\u2500 heart_disease_model.pkl     # Generated serialized model + StandardScaler pipeline\n\u251c\u2500\u2500 requirements.txt            # Python library dependencies\n\u251c\u2500\u2500 README.md                   # Project documentation & run guide\n\u251c\u2500\u2500 viva_defense_guide.md       # Top 25 Viva Questions & Answers for College Evaluation\n\u2502\n\u2514\u2500\u2500 templates/\n    \u2514\u2500\u2500 index.html              # Responsive web UI with real-time AJAX inference\n```\n\n---\n\n## 2. Step-by-Step Execution Guide (Localhost)\n\n### Step 1: Navigate to project\n```bash\ncd heart_disease_prediction\n```\n\n### Step 2: Create virtual environment\n```bash\npython3 -m venv venv\nsource venv/bin/activate  # On Windows: venv\\Scripts\\activate\n```\n\n### Step 3: Install dependencies\n```bash\npip install -r requirements.txt\n```\n\n### Step 4: Train the ML Model\n```bash\npython train_model.py\n```\n\n### Step 5: Start the local Flask web application\n```bash\npython app.py\n```\nVisit http://127.0.0.1:5000 in your browser!\n\n---\n\n## 7. Live Demo (GitHub Pages)\n\nA static build of the app is published from the `docs/` folder:\n\n**https://octaboomai.github.io/MediPredict-ML/**\n\nGitHub Pages can only serve static files, so this build has no Flask backend. Instead,\n`train_model.py`'s trained Random Forest (100 trees, max depth 6) and its `StandardScaler`\nare exported to `docs/model.json`, and the tree traversal is re-implemented in JavaScript so\npredictions run entirely in the visitor's browser. It uses the same UI, presets, thresholds\nand recommendation logic as the Flask app.\n\nTo regenerate the static build after retraining the model:\n\n```bash\npython train_model.py          # produces heart_disease_model.pkl\npython export_model_json.py    # writes docs/model.json from the .pkl\n```\n\nThe Flask version in `app.py` is unchanged and remains the reference implementation for\nlocal use, viva demonstrations and the `POST /predict` + `GET /metrics` API.\n"};
+const MODEL = {"features":["age","sex","cp","trestbps","chol","fbs","restecg","thalach","exang","oldpeak","slope","ca","thal"],"scaler":{"mean":[54.0,0.625,1.375,136.33333333333334,252.41666666666666,0.16666666666666666,0.5416666666666666,156.41666666666666,0.25,1.4708333333333332,1.375,0.375,2.1666666666666665],"scale":[9.46924847422786,0.4841229182759271,1.0728660991319778,15.203252575974949,59.455106780008585,0.37267799624996495,0.4982608642958916,21.3949306041304,0.4330127018922193,1.2022476057599596,0.6959705453537527,0.9042722672587794,0.5527707983925666]},"metrics":{"accuracy":1.0,"precision":1.0,"recall":1.0,"f1_score":1.0,"roc_auc":1.0},"algorithm":"RandomForestClassifier(n_estimators=100, max_depth=6)","trees":[{"cl":[1,2,-1,-1,-1],"cr":[4,3,-1,-1,-1],"f":[4,0,-2,-2,-2],"th":[0.5396228134632111,0.5808274894952774,-2.0,-2.0,-2.0],"v":[[0.5416666666666666,0.4583333333333333],[0.35294117647058826,0.6470588235294118],[0.0,1.0],[0.8571428571428571,0.14285714285714285],[1.0,0.0]]},{"cl":[1,2,3,-1,-1,-1,-1],"cr":[6,5,4,-1,-1,-1,-1],"f":[11,8,0,-2,-2,-2,-2],"th":[0.13823270797729492,0.5773502588272095,0.686432495713234,-2.0,-2.0,-2.0,-2.0],"v":[[0.625,0.375],[0.18181818181818182,0.8181818181818182],[0.1111111111111111,0.8888888888888888],[0.0,1.0],[0.5,0.5],[0.5,0.5],[1.0,0.0]]},{"cl":[1,2,3,-1,-1,-1,-1],"cr":[6,5,4,-1,-1,-1,-1],"f":[6,8,7,-2,-2,-2,-2],"th":[-0.08362418413162231,0.5773502588272095,-0.2064351961016655,-2.0,-2.0,-2.0,-2.0],"v":[[0.3333333333333333,0.6666666666666666],[0.8,0.2],[0.5,0.5],[0.5,0.5],[0.5,0.5],[1.0,0.0],[0.0,1.0]]},{"cl":[1,2,-1,-1,-1],"cr":[4,3,-1,-1,-1],"f":[6,10,-2,-2,-2],"th":[-0.08362418413162231,0.17960530519485474,-2.0,-2.0,-2.0],"v":[[0.5416666666666666,0.4583333333333333],[0.8125,0.1875],[1.0,0.0],[0.0,1.0],[0.0,1.0]]},{"cl":[1,2,3,-1,-1,-1,-1],"cr":[6,5,4,-1,-1,-1,-1],"f":[6,2,2,-2,-2,-2,-2],"th":[-0.08362418413162231,1.0485931038856506,-0.34953105449676514,-2.0,-2.0,-2.0,-2.0],"v":[[0.5,0.5],[0.8,0.2],[0.9230769230769231,0.07692307692307693],[1.0,0.0],[0.6666666666666666,0.3333333333333333],[0.0,1.0],[0.0,1.0]]},{"cl":[1,-1,-1],"cr":[2,-1,-1],"f":[2,-2,-2],"th":[-0.8155724257230759,-2.0,-2.0],"v":[[0.625,0.375],[1.0,0.0],[0.0,1.0]]},{"cl":[1,2,-1,-1,-1],"cr":[4,3,-1,-1,-1],"f":[7,4,-2,-2,-2],"th":[-0.019475020468235016,-0.8479787409305573,-2.0,-2.0,-2.0],"v":[[0.5,0.5],[0.9230769230769231,0.07692307692307693],[0.5,0.5],[1.0,0.0],[0.0,1.0]]},{"cl":[1,2,-1,-1,5,-1,-1],"cr":[4,3,-1,-1,6,-1,-1],"f":[4,4,-2,-2,11,-2,-2],"th":[0.4387063533067703,-1.0666311085224152,-2.0,-2.0,0.6911634802818298,-2.0,-2.0],"v":[[0.4166666666666667,0.5833333333333334],[0.07692307692307693,0.9230769230769231],[0.3333333333333333,0.6666666666666666],[0.0,1.0],[0.8181818181818182,0.18181818181818182],[0.5,0.5],[1.0,0.0]]},{"cl":[1,-1,-1],"cr":[2,-1,-1],"f":[7,-2,-2],"th":[-0.6270955801010132,-2.0,-2.0],"v":[[0.4583333333333333,0.5416666666666666],[1.0,0.0],[0.0,1.0]]},{"cl":[1,2,-1,-1,5,-1,-1],"cr":[4,3,-1,-1,6,-1,-1],"f":[1,9,-2,-2,12,-2,-2],"th":[-0.2581988573074341,0.5233253762125969,-2.0,-2.0,0.6030226647853851,-2.0,-2.0],"v":[[0.6666666666666666,0.3333333333333333],[0.2222222222222222,0.7777777777777778],[0.0,1.0],[0.6666666666666666,0.3333333333333333],[0.9333333333333333,0.06666666666666667],[0.875,0.125],[1.0,0.0]]},{"cl":[1,-1,3,4,-1,-1,-1],"cr":[2,-1,6,5,-1,-1,-1],"f":[3,-2,2,0,-2,-2,-2],"th":[-0.35080212354660034,-2.0,1.0485931038856506,0.26401249319314957,-2.0,-2.0,-2.0],"v":[[0.5,0.5],[0.0,1.0],[0.8,0.2],[0.9230769230769231,0.07692307692307693],[0.6666666666666666,0.3333333333333333],[1.0,0.0],[0.0,1.0]]},{"cl":[1,2,-1,-1,5,-1,-1],"cr":[4,3,-1,-1,6,-1,-1],"f":[2,7,-2,-2,10,-2,-2],"th":[-0.8155724257230759,-0.393395371735096,-2.0,-2.0,0.17960530519485474,-2.0,-2.0],"v":[[0.4166666666666667,0.5833333333333334],[0.9,0.1],[1.0,0.0],[0.6666666666666666,0.3333333333333333],[0.07142857142857142,0.9285714285714286],[0.14285714285714285,0.8571428571428571],[0.0,1.0]]},{"cl":[1,2,-1,4,-1,-1,-1],"cr":[6,3,-1,5,-1,-1,-1],"f":[6,2,-2,9,-2,-2,-2],"th":[-0.08362418413162231,-0.8155724257230759,-2.0,-0.30845005437731743,-2.0,-2.0,-2.0],"v":[[0.5,0.5],[0.75,0.25],[1.0,0.0],[0.3333333333333333,0.6666666666666666],[0.6666666666666666,0.3333333333333333],[0.0,1.0],[0.0,1.0]]},{"cl":[1,2,-1,-1,-1],"cr":[4,3,-1,-1,-1],"f":[6,10,-2,-2,-2],"th":[-0.08362418413162231,0.17960530519485474,-2.0,-2.0,-2.0],"v":[[0.5833333333333334,0.4166666666666667],[0.875,0.125],[1.0,0.0],[0.0,1.0],[0.0,1.0]]},{"cl":[1,2,-1,4,-1,-1,-1],"cr":[6,3,-1,5,-1,-1,-1],"f":[10,2,-2,0,-2,-2,-2],"th":[0.17960530519485474,-0.34953105449676514,-2.0,0.42242003977298737,-2.0,-2.0,-2.0],"v":[[0.4166666666666667,0.5833333333333334],[0.7142857142857143,0.2857142857142857],[1.0,0.0],[0.42857142857142855,0.5714285714285714],[0.0,1.0],[0.75,0.25],[0.0,1.0]]},{"cl":[1,2,-1,-1,-1],"cr":[4,3,-1,-1,-1],"f":[2,11,-2,-2,-2],"th":[-0.8155724257230759,0.13823270797729492,-2.0,-2.0,-2.0],"v":[[0.5416666666666666,0.4583333333333333],[0.9285714285714286,0.07142857142857142],[0.75,0.25],[1.0,0.0],[0.0,1.0]]},{"cl":[1,2,-1,-1,5,-1,-1],"cr":[4,3,-1,-1,6,-1,-1],"f":[8,4,-2,-2,9,-2,-2],"th":[0.5773502588272095,0.7162266951054335,-2.0,-2.0,0.6896804571151733,-2.0,-2.0],"v":[[0.4166666666666667,0.5833333333333334],[0.07692307692307693,0.9230769230769231],[0.0,1.0],[0.25,0.75],[0.8181818181818182,0.18181818181818182],[0.5,0.5],[1.0,0.0]]},{"cl":[1,2,-1,4,-1,-1,-1],"cr":[6,3,-1,5,-1,-1,-1],"f":[7,3,-2,9,-2,-2,-2],"th":[-0.11295510828495026,-0.35080212354660034,-2.0,1.0223906338214874,-2.0,-2.0,-2.0],"v":[[0.4166666666666667,0.5833333333333334],[0.7692307692307693,0.23076923076923078],[0.0,1.0],[0.9090909090909091,0.09090909090909091],[0.6666666666666666,0.3333333333333333],[1.0,0.0],[0.0,1.0]]},{"cl":[1,2,-1,-1,-1],"cr":[4,3,-1,-1,-1],"f":[9,3,-2,-2,-2],"th":[0.6896804571151733,0.9647058248519897,-2.0,-2.0,-2.0],"v":[[0.5416666666666666,0.4583333333333333],[0.15384615384615385,0.8461538461538461],[0.0,1.0],[0.6666666666666666,0.3333333333333333],[1.0,0.0]]},{"cl":[1,-1,3,4,-1,-1,-1],"cr":[2,-1,6,5,-1,-1,-1],"f":[9,-2,6,2,-2,-2,-2],"th":[-0.6411602199077606,-2.0,-0.08362418413162231,1.0485931038856506,-2.0,-2.0,-2.0],"v":[[0.2916666666666667,0.7083333333333334],[0.0,1.0],[0.4666666666666667,0.5333333333333333],[0.7777777777777778,0.2222222222222222],[1.0,0.0],[0.0,1.0],[0.0,1.0]]},{"cl":[1,2,-1,4,-1,-1,-1],"cr":[6,3,-1,5,-1,-1,-1],"f":[10,0,-2,7,-2,-2,-2],"th":[0.17960530519485474,0.6864325106143951,-2.0,-1.7254865765571594,-2.0,-2.0,-2.0],"v":[[0.5,0.5],[0.8,0.2],[0.6,0.4],[0.9,0.1],[0.5,0.5],[1.0,0.0],[0.0,1.0]]},{"cl":[1,2,-1,-1,-1],"cr":[4,3,-1,-1,-1],"f":[8,3,-2,-2,-2],"th":[0.5773502588272095,0.7344919443130493,-2.0,-2.0,-2.0],"v":[[0.3333333333333333,0.6666666666666666],[0.15789473684210525,0.8421052631578947],[0.0,1.0],[0.42857142857142855,0.5714285714285714],[1.0,0.0]]},{"cl":[1,-1,3,-1,-1],"cr":[2,-1,4,-1,-1],"f":[2,-2,9,-2,-2],"th":[-0.8155724257230759,-2.0,-0.2252725139260292,-2.0,-2.0],"v":[[0.625,0.375],[1.0,0.0],[0.18181818181818182,0.8181818181818182],[0.5,0.5],[0.0,1.0]]},{"cl":[1,2,-1,-1,-1],"cr":[4,3,-1,-1,-1],"f":[7,3,-2,-2,-2],"th":[-0.019475020468235016,-0.08770053088665009,-2.0,-2.0,-2.0],"v":[[0.625,0.375],[0.9375,0.0625],[0.6666666666666666,0.3333333333333333],[1.0,0.0],[0.0,1.0]]},{"cl":[1,-1,-1],"cr":[2,-1,-1],"f":[6,-2,-2],"th":[-0.08362418413162231,-2.0,-2.0],"v":[[0.5416666666666666,0.4583333333333333],[1.0,0.0],[0.0,1.0]]},{"cl":[1,-1,3,-1,5,-1,-1],"cr":[2,-1,4,-1,6,-1,-1],"f":[2,-2,1,-2,12,-2,-2],"th":[-0.8155724257230759,-2.0,-0.2581988573074341,-2.0,0.6030226647853851,-2.0,-2.0],"v":[[0.4583333333333333,0.5416666666666666],[1.0,0.0],[0.07142857142857142,0.9285714285714286],[0.0,1.0],[0.1111111111111111,0.8888888888888888],[0.0,1.0],[0.3333333333333333,0.6666666666666666]]},{"cl":[1,2,3,-1,-1,-1,-1],"cr":[6,5,4,-1,-1,-1,-1],"f":[7,9,4,-2,-2,-2,-2],"th":[0.28433527797460556,1.0223906338214874,-0.5620487183332443,-2.0,-2.0,-2.0,-2.0],"v":[[0.5833333333333334,0.4166666666666667],[0.8235294117647058,0.17647058823529413],[0.5714285714285714,0.42857142857142855],[0.6666666666666666,0.3333333333333333],[0.5,0.5],[1.0,0.0],[0.0,1.0]]},{"cl":[1,2,-1,-1,-1],"cr":[4,3,-1,-1,-1],"f":[11,4,-2,-2,-2],"th":[0.13823270797729492,1.4815099835395813,-2.0,-2.0,-2.0],"v":[[0.5416666666666666,0.4583333333333333],[0.26666666666666666,0.7333333333333333],[0.0,1.0],[0.8,0.2],[1.0,0.0]]},{"cl":[1,-1,3,-1,5,-1,-1],"cr":[2,-1,4,-1,6,-1,-1],"f":[9,-2,10,-2,12,-2,-2],"th":[-0.35003881994634867,-2.0,-1.2572371065616608,-2.0,0.6030226647853851,-2.0,-2.0],"v":[[0.5416666666666666,0.4583333333333333],[0.0,1.0],[0.8125,0.1875],[0.0,1.0],[0.9285714285714286,0.07142857142857142],[0.8,0.2],[1.0,0.0]]},{"cl":[1,2,-1,-1,-1],"cr":[4,3,-1,-1,-1],"f":[11,8,-2,-2,-2],"th":[0.13823270797729492,0.5773502588272095,-2.0,-2.0,-2.0],"v":[[0.5416666666666666,0.4583333333333333],[0.08333333333333333,0.9166666666666666],[0.0,1.0],[0.5,0.5],[1.0,0.0]]},{"cl":[1,2,-1,-1,-1],"cr":[4,3,-1,-1,-1],"f":[10,6,-2,-2,-2],"th":[0.17960530519485474,-0.08362418413162231,-2.0,-2.0,-2.0],"v":[[0.5416666666666666,0.4583333333333333],[0.8666666666666667,0.13333333333333333],[1.0,0.0],[0.0,1.0],[0.0,1.0]]},{"cl":[1,2,-1,4,-1,-1,-1],"cr":[6,3,-1,5,-1,-1,-1],"f":[10,8,-2,0,-2,-2,-2],"th":[0.17960530519485474,0.5773502588272095,-2.0,0.6864325106143951,-2.0,-2.0,-2.0],"v":[[0.4166666666666667,0.5833333333333334],[0.8333333333333334,0.16666666666666666],[0.75,0.25],[0.875,0.125],[1.0,0.0],[0.75,0.25],[0.0,1.0]]},{"cl":[1,2,-1,-1,5,-1,-1],"cr":[4,3,-1,-1,6,-1,-1],"f":[0,5,-2,-2,2,-2,-2],"th":[0.5280250161886215,0.8944272100925446,-2.0,-2.0,1.0485931038856506,-2.0,-2.0],"v":[[0.5,0.5],[0.1,0.9],[0.0,1.0],[0.5,0.5],[0.7857142857142857,0.21428571428571427],[1.0,0.0],[0.0,1.0]]},{"cl":[1,2,3,-1,-1,-1,-1],"cr":[6,5,4,-1,-1,-1,-1],"f":[4,4,6,-2,-2,-2,-2],"th":[0.4387063533067703,-0.5031807720661163,-0.08362418413162231,-2.0,-2.0,-2.0,-2.0],"v":[[0.625,0.375],[0.4,0.6],[0.75,0.25],[1.0,0.0],[0.0,1.0],[0.0,1.0],[1.0,0.0]]},{"cl":[1,2,-1,-1,-1],"cr":[4,3,-1,-1,-1],"f":[6,3,-2,-2,-2],"th":[-0.08362418413162231,-0.35080212354660034,-2.0,-2.0,-2.0],"v":[[0.4583333333333333,0.5416666666666666],[0.8461538461538461,0.15384615384615385],[0.0,1.0],[1.0,0.0],[0.0,1.0]]},{"cl":[1,-1,3,-1,-1],"cr":[2,-1,4,-1,-1],"f":[2,-2,3,-2,-2],"th":[-0.8155724257230759,-2.0,0.9647058248519897,-2.0,-2.0],"v":[[0.4166666666666667,0.5833333333333334],[1.0,0.0],[0.125,0.875],[0.0,1.0],[0.5,0.5]]},{"cl":[1,2,-1,4,-1,-1,-1],"cr":[6,3,-1,5,-1,-1,-1],"f":[9,2,-2,10,-2,-2,-2],"th":[1.0223906338214874,-0.8155724257230759,-2.0,0.17960530519485474,-2.0,-2.0,-2.0],"v":[[0.6666666666666666,0.3333333333333333],[0.2,0.8],[0.5,0.5],[0.125,0.875],[0.3333333333333333,0.6666666666666666],[0.0,1.0],[1.0,0.0]]},{"cl":[1,2,-1,-1,-1],"cr":[4,3,-1,-1,-1],"f":[6,2,-2,-2,-2],"th":[-0.08362418413162231,-0.8155724257230759,-2.0,-2.0,-2.0],"v":[[0.375,0.625],[0.75,0.25],[1.0,0.0],[0.5,0.5],[0.0,1.0]]},{"cl":[1,2,-1,-1,5,-1,-1],"cr":[4,3,-1,-1,6,-1,-1],"f":[12,3,-2,-2,7,-2,-2],"th":[0.6030226647853851,0.4056149572134018,-2.0,-2.0,-0.4868754595518112,-2.0,-2.0],"v":[[0.5833333333333334,0.4166666666666667],[0.18181818181818182,0.8181818181818182],[0.0,1.0],[0.6666666666666666,0.3333333333333333],[0.9230769230769231,0.07692307692307693],[1.0,0.0],[0.75,0.25]]},{"cl":[1,2,-1,-1,-1],"cr":[4,3,-1,-1,-1],"f":[6,5,-2,-2,-2],"th":[-0.08362418413162231,0.8944272100925446,-2.0,-2.0,-2.0],"v":[[0.5416666666666666,0.4583333333333333],[0.9285714285714286,0.07142857142857142],[1.0,0.0],[0.6666666666666666,0.3333333333333333],[0.0,1.0]]},{"cl":[1,-1,3,-1,-1],"cr":[2,-1,4,-1,-1],"f":[2,-2,3,-2,-2],"th":[-0.8155724257230759,-2.0,0.7344919443130493,-2.0,-2.0],"v":[[0.5,0.5],[1.0,0.0],[0.2,0.8],[0.0,1.0],[0.6,0.4]]},{"cl":[1,2,3,-1,-1,-1,-1],"cr":[6,5,4,-1,-1,-1,-1],"f":[11,9,0,-2,-2,-2,-2],"th":[0.6911634802818298,0.9808018207550049,0.686432495713234,-2.0,-2.0,-2.0,-2.0],"v":[[0.625,0.375],[0.4,0.6],[0.2,0.8],[0.0,1.0],[0.5,0.5],[0.8,0.2],[1.0,0.0]]},{"cl":[1,-1,-1],"cr":[2,-1,-1],"f":[6,-2,-2],"th":[-0.08362418413162231,-2.0,-2.0],"v":[[0.5833333333333334,0.4166666666666667],[1.0,0.0],[0.0,1.0]]},{"cl":[1,2,3,-1,-1,-1,-1],"cr":[6,5,4,-1,-1,-1,-1],"f":[6,9,8,-2,-2,-2,-2],"th":[-0.08362418413162231,0.6896804571151733,0.5773502588272095,-2.0,-2.0,-2.0,-2.0],"v":[[0.375,0.625],[0.75,0.25],[0.25,0.75],[0.0,1.0],[0.5,0.5],[1.0,0.0],[0.0,1.0]]},{"cl":[1,2,-1,-1,-1],"cr":[4,3,-1,-1,-1],"f":[6,2,-2,-2,-2],"th":[-0.08362418413162231,1.0485931038856506,-2.0,-2.0,-2.0],"v":[[0.5833333333333334,0.4166666666666667],[0.875,0.125],[1.0,0.0],[0.0,1.0],[0.0,1.0]]},{"cl":[1,2,3,-1,-1,-1,-1],"cr":[6,5,4,-1,-1,-1,-1],"f":[10,4,7,-2,-2,-2,-2],"th":[0.17960530519485474,0.08549867570400238,-0.884165808558464,-2.0,-2.0,-2.0,-2.0],"v":[[0.4583333333333333,0.5416666666666666],[0.7333333333333333,0.26666666666666666],[0.3333333333333333,0.6666666666666666],[0.6666666666666666,0.3333333333333333],[0.0,1.0],[1.0,0.0],[0.0,1.0]]},{"cl":[1,2,-1,-1,-1],"cr":[4,3,-1,-1,-1],"f":[10,9,-2,-2,-2],"th":[0.17960530519485474,-0.26686128322035074,-2.0,-2.0,-2.0],"v":[[0.5,0.5],[0.8571428571428571,0.14285714285714285],[0.3333333333333333,0.6666666666666666],[1.0,0.0],[0.0,1.0]]},{"cl":[1,2,-1,-1,-1],"cr":[4,3,-1,-1,-1],"f":[0,7,-2,-2,-2],"th":[0.5808274894952774,-0.15969514846801758,-2.0,-2.0,-2.0],"v":[[0.4166666666666667,0.5833333333333334],[0.125,0.875],[0.6666666666666666,0.3333333333333333],[0.0,1.0],[1.0,0.0]]},{"cl":[1,2,-1,-1,5,-1,7,-1,-1],"cr":[4,3,-1,-1,6,-1,8,-1,-1],"f":[0,7,-2,-2,9,-2,8,-2,-2],"th":[0.5280250161886215,-0.6037255525588989,-2.0,-2.0,0.48173660691827536,-2.0,0.5773502588272095,-2.0,-2.0],"v":[[0.6666666666666666,0.3333333333333333],[0.3,0.7],[0.75,0.25],[0.0,1.0],[0.9285714285714286,0.07142857142857142],[1.0,0.0],[0.8571428571428571,0.14285714285714285],[0.6666666666666666,0.3333333333333333],[1.0,0.0]]},{"cl":[1,2,-1,-1,5,-1,-1],"cr":[4,3,-1,-1,6,-1,-1],"f":[0,12,-2,-2,11,-2,-2],"th":[0.5808274894952774,0.6030226647853851,-2.0,-2.0,0.13823270797729492,-2.0,-2.0],"v":[[0.4583333333333333,0.5416666666666666],[0.07692307692307693,0.9230769230769231],[0.0,1.0],[0.3333333333333333,0.6666666666666666],[0.9090909090909091,0.09090909090909091],[0.75,0.25],[1.0,0.0]]},{"cl":[1,2,-1,-1,5,-1,-1],"cr":[4,3,-1,-1,6,-1,-1],"f":[0,7,-2,-2,4,-2,-2],"th":[0.47522252798080444,0.19085517525672913,-2.0,-2.0,-0.6881943047046661,-2.0,-2.0],"v":[[0.5833333333333334,0.4166666666666667],[0.1111111111111111,0.8888888888888888],[0.5,0.5],[0.0,1.0],[0.8666666666666667,0.13333333333333333],[0.6,0.4],[1.0,0.0]]},{"cl":[1,2,-1,-1,5,-1,-1],"cr":[4,3,-1,-1,6,-1,-1],"f":[12,2,-2,-2,9,-2,-2],"th":[0.6030226647853851,-0.8155724257230759,-2.0,-2.0,-0.6827490031719208,-2.0,-2.0],"v":[[0.5,0.5],[0.23076923076923078,0.7692307692307693],[0.6,0.4],[0.0,1.0],[0.8181818181818182,0.18181818181818182],[0.0,1.0],[1.0,0.0]]},{"cl":[1,2,-1,-1,-1],"cr":[4,3,-1,-1,-1],"f":[0,9,-2,-2,-2],"th":[0.5280250161886215,0.6065028794109821,-2.0,-2.0,-2.0],"v":[[0.5,0.5],[0.14285714285714285,0.8571428571428571],[0.0,1.0],[0.6666666666666666,0.3333333333333333],[1.0,0.0]]},{"cl":[1,2,-1,-1,-1],"cr":[4,3,-1,-1,-1],"f":[10,2,-2,-2,-2],"th":[0.17960530519485474,-0.34953105449676514,-2.0,-2.0,-2.0],"v":[[0.5,0.5],[0.75,0.25],[1.0,0.0],[0.5,0.5],[0.0,1.0]]},{"cl":[1,2,-1,-1,-1],"cr":[4,3,-1,-1,-1],"f":[11,0,-2,-2,-2],"th":[0.13823270797729492,-0.47522253543138504,-2.0,-2.0,-2.0],"v":[[0.3333333333333333,0.6666666666666666],[0.1111111111111111,0.8888888888888888],[0.6666666666666666,0.3333333333333333],[0.0,1.0],[1.0,0.0]]},{"cl":[1,-1,3,4,-1,-1,-1],"cr":[2,-1,6,5,-1,-1,-1],"f":[3,-2,4,10,-2,-2,-2],"th":[-0.35080212354660034,-2.0,0.10231809318065643,-1.2572371065616608,-2.0,-2.0,-2.0],"v":[[0.5833333333333334,0.4166666666666667],[0.0,1.0],[0.7777777777777778,0.2222222222222222],[0.5555555555555556,0.4444444444444444],[0.0,1.0],[0.8333333333333334,0.16666666666666666],[1.0,0.0]]},{"cl":[1,2,-1,-1,5,6,-1,-1,-1],"cr":[4,3,-1,-1,8,7,-1,-1,-1],"f":[1,6,-2,-2,5,4,-2,-2,-2],"th":[-0.2581988573074341,-0.08362418413162231,-2.0,-2.0,0.8944272100925446,-1.049811691045761,-2.0,-2.0,-2.0],"v":[[0.6666666666666666,0.3333333333333333],[0.16666666666666666,0.8333333333333334],[0.5,0.5],[0.0,1.0],[0.8333333333333334,0.16666666666666666],[0.9230769230769231,0.07692307692307693],[0.8,0.2],[1.0,0.0],[0.6,0.4]]},{"cl":[1,2,3,4,-1,-1,-1,-1,-1],"cr":[8,7,6,5,-1,-1,-1,-1,-1],"f":[7,0,5,4,-2,-2,-2,-2,-2],"th":[-0.019475020468235016,1.0032475292682648,0.8944272100925446,-0.25929929316043854,-2.0,-2.0,-2.0,-2.0,-2.0],"v":[[0.375,0.625],[0.6428571428571429,0.35714285714285715],[0.8,0.2],[0.875,0.125],[0.5,0.5],[1.0,0.0],[0.5,0.5],[0.25,0.75],[0.0,1.0]]},{"cl":[1,2,-1,-1,5,-1,7,-1,-1],"cr":[4,3,-1,-1,6,-1,8,-1,-1],"f":[2,4,-2,-2,1,-2,2,-2,-2],"th":[-0.8155724257230759,1.599245846271515,-2.0,-2.0,-0.2581988573074341,-2.0,0.11651034653186798,-2.0,-2.0],"v":[[0.5,0.5],[0.875,0.125],[1.0,0.0],[0.5,0.5],[0.3125,0.6875],[0.0,1.0],[0.5,0.5],[0.0,1.0],[0.625,0.375]]},{"cl":[1,-1,3,-1,-1],"cr":[2,-1,4,-1,-1],"f":[4,-2,10,-2,-2],"th":[0.3630189970135689,-2.0,0.17960530519485474,-2.0,-2.0],"v":[[0.375,0.625],[0.0,1.0],[0.8181818181818182,0.18181818181818182],[1.0,0.0],[0.0,1.0]]},{"cl":[1,2,-1,-1,-1],"cr":[4,3,-1,-1,-1],"f":[7,2,-2,-2,-2],"th":[0.09737508744001389,1.0485931038856506,-2.0,-2.0,-2.0],"v":[[0.5,0.5],[0.8,0.2],[1.0,0.0],[0.0,1.0],[0.0,1.0]]},{"cl":[1,2,-1,-1,-1],"cr":[4,3,-1,-1,-1],"f":[6,4,-2,-2,-2],"th":[-0.08362418413162231,-0.6881943047046661,-2.0,-2.0,-2.0],"v":[[0.5833333333333334,0.4166666666666667],[0.875,0.125],[0.6666666666666666,0.3333333333333333],[1.0,0.0],[0.0,1.0]]},{"cl":[1,-1,3,4,-1,-1,-1],"cr":[2,-1,6,5,-1,-1,-1],"f":[9,-2,12,8,-2,-2,-2],"th":[-0.5995714366436005,-2.0,0.6030226647853851,0.5773502588272095,-2.0,-2.0,-2.0],"v":[[0.375,0.625],[0.0,1.0],[0.5294117647058824,0.47058823529411764],[0.1111111111111111,0.8888888888888888],[0.0,1.0],[0.5,0.5],[1.0,0.0]]},{"cl":[1,2,-1,-1,5,6,-1,-1,-1],"cr":[4,3,-1,-1,8,7,-1,-1,-1],"f":[0,4,-2,-2,12,9,-2,-2,-2],"th":[0.47522252798080444,0.8339625597000122,-2.0,-2.0,0.6030226647853851,0.6065029203891754,-2.0,-2.0,-2.0],"v":[[0.5833333333333334,0.4166666666666667],[0.125,0.875],[0.0,1.0],[0.5,0.5],[0.8125,0.1875],[0.625,0.375],[0.75,0.25],[0.5,0.5],[1.0,0.0]]},{"cl":[1,2,-1,4,-1,-1,-1],"cr":[6,3,-1,5,-1,-1,-1],"f":[9,4,-2,1,-2,-2,-2],"th":[0.8976243138313293,-0.6966040134429932,-2.0,-0.2581988573074341,-2.0,-2.0,-2.0],"v":[[0.3333333333333333,0.6666666666666666],[0.15789473684210525,0.8421052631578947],[0.0,1.0],[0.25,0.75],[0.0,1.0],[0.6,0.4],[1.0,0.0]]},{"cl":[1,2,-1,-1,-1],"cr":[4,3,-1,-1,-1],"f":[6,2,-2,-2,-2],"th":[-0.08362418413162231,-0.34953105449676514,-2.0,-2.0,-2.0],"v":[[0.5,0.5],[0.9230769230769231,0.07692307692307693],[1.0,0.0],[0.6666666666666666,0.3333333333333333],[0.0,1.0]]},{"cl":[1,2,3,-1,-1,-1,-1],"cr":[6,5,4,-1,-1,-1,-1],"f":[10,2,11,-2,-2,-2,-2],"th":[0.17960530519485474,0.11651033163070679,0.13823270797729492,-2.0,-2.0,-2.0,-2.0],"v":[[0.5,0.5],[0.7058823529411765,0.29411764705882354],[0.9230769230769231,0.07692307692307693],[0.5,0.5],[1.0,0.0],[0.0,1.0],[0.0,1.0]]},{"cl":[1,-1,-1],"cr":[2,-1,-1],"f":[6,-2,-2],"th":[-0.08362418413162231,-2.0,-2.0],"v":[[0.75,0.25],[1.0,0.0],[0.0,1.0]]},{"cl":[1,2,3,-1,-1,-1,-1],"cr":[6,5,4,-1,-1,-1,-1],"f":[9,7,9,-2,-2,-2,-2],"th":[0.9808018207550049,-0.11295510828495026,-0.26686128322035074,-2.0,-2.0,-2.0,-2.0],"v":[[0.375,0.625],[0.11764705882352941,0.8823529411764706],[0.4,0.6],[0.3333333333333333,0.6666666666666666],[0.5,0.5],[0.0,1.0],[1.0,0.0]]},{"cl":[1,2,3,-1,-1,-1,-1],"cr":[6,5,4,-1,-1,-1,-1],"f":[6,12,8,-2,-2,-2,-2],"th":[-0.08362418413162231,0.6030226647853851,0.5773502588272095,-2.0,-2.0,-2.0,-2.0],"v":[[0.375,0.625],[0.6,0.4],[0.3333333333333333,0.6666666666666666],[0.0,1.0],[0.75,0.25],[1.0,0.0],[0.0,1.0]]},{"cl":[1,2,-1,-1,5,6,-1,-1,-1],"cr":[4,3,-1,-1,8,7,-1,-1,-1],"f":[2,7,-2,-2,10,7,-2,-2,-2],"th":[-0.8155724257230759,-0.393395371735096,-2.0,-2.0,0.17960530519485474,-0.4401354044675827,-2.0,-2.0,-2.0],"v":[[0.5416666666666666,0.4583333333333333],[0.9230769230769231,0.07692307692307693],[1.0,0.0],[0.5,0.5],[0.09090909090909091,0.9090909090909091],[0.16666666666666666,0.8333333333333334],[0.0,1.0],[0.5,0.5],[0.0,1.0]]},{"cl":[1,2,-1,-1,5,-1,-1],"cr":[4,3,-1,-1,6,-1,-1],"f":[2,11,-2,-2,0,-2,-2],"th":[-0.8155724257230759,1.2440943121910095,-2.0,-2.0,0.7392350286245346,-2.0,-2.0],"v":[[0.375,0.625],[0.8,0.2],[0.5,0.5],[1.0,0.0],[0.07142857142857142,0.9285714285714286],[0.0,1.0],[0.3333333333333333,0.6666666666666666]]},{"cl":[1,-1,3,-1,-1],"cr":[2,-1,4,-1,-1],"f":[0,-2,2,-2,-2],"th":[0.5280250161886215,-2.0,1.0485931038856506,-2.0,-2.0],"v":[[0.375,0.625],[0.0,1.0],[0.75,0.25],[1.0,0.0],[0.0,1.0]]},{"cl":[1,2,3,-1,-1,-1,-1],"cr":[6,5,4,-1,-1,-1,-1],"f":[7,2,4,-2,-2,-2,-2],"th":[-0.019475020468235016,1.0485931038856506,-0.8479787409305573,-2.0,-2.0,-2.0,-2.0],"v":[[0.4583333333333333,0.5416666666666666],[0.7857142857142857,0.21428571428571427],[0.9166666666666666,0.08333333333333333],[0.5,0.5],[1.0,0.0],[0.0,1.0],[0.0,1.0]]},{"cl":[1,2,-1,4,-1,-1,-1],"cr":[6,3,-1,5,-1,-1,-1],"f":[7,2,-2,7,-2,-2,-2],"th":[0.09737508744001389,-0.34953105449676514,-2.0,-0.6972056329250336,-2.0,-2.0,-2.0],"v":[[0.5,0.5],[0.75,0.25],[1.0,0.0],[0.2,0.8],[0.0,1.0],[0.5,0.5],[0.0,1.0]]},{"cl":[1,-1,3,-1,-1],"cr":[2,-1,4,-1,-1],"f":[2,-2,3,-2,-2],"th":[-0.8155724257230759,-2.0,0.9647058248519897,-2.0,-2.0],"v":[[0.5833333333333334,0.4166666666666667],[0.8666666666666667,0.13333333333333333],[0.1111111111111111,0.8888888888888888],[0.0,1.0],[0.5,0.5]]},{"cl":[1,-1,3,-1,5,-1,-1],"cr":[2,-1,4,-1,6,-1,-1],"f":[9,-2,10,-2,2,-2,-2],"th":[-0.5995714366436005,-2.0,-1.2572371065616608,-2.0,-0.34953105449676514,-2.0,-2.0],"v":[[0.625,0.375],[0.0,1.0],[0.8333333333333334,0.16666666666666666],[0.0,1.0],[0.9375,0.0625],[1.0,0.0],[0.5,0.5]]},{"cl":[1,2,-1,-1,-1],"cr":[4,3,-1,-1,-1],"f":[7,1,-2,-2,-2],"th":[0.07400507479906082,-0.2581988573074341,-2.0,-2.0,-2.0],"v":[[0.5416666666666666,0.4583333333333333],[0.8666666666666667,0.13333333333333333],[0.3333333333333333,0.6666666666666666],[1.0,0.0],[0.0,1.0]]},{"cl":[1,2,3,-1,-1,-1,-1],"cr":[6,5,4,-1,-1,-1,-1],"f":[11,0,12,-2,-2,-2,-2],"th":[0.13823270797729492,1.1088525354862213,0.6030226647853851,-2.0,-2.0,-2.0,-2.0],"v":[[0.5833333333333334,0.4166666666666667],[0.23076923076923078,0.7692307692307693],[0.1,0.9],[0.0,1.0],[0.5,0.5],[0.6666666666666666,0.3333333333333333],[1.0,0.0]]},{"cl":[1,2,-1,-1,-1],"cr":[4,3,-1,-1,-1],"f":[7,3,-2,-2,-2],"th":[0.07400507479906082,-0.08770053088665009,-2.0,-2.0,-2.0],"v":[[0.5,0.5],[0.9230769230769231,0.07692307692307693],[0.5,0.5],[1.0,0.0],[0.0,1.0]]},{"cl":[1,2,-1,-1,5,-1,-1],"cr":[4,3,-1,-1,6,-1,-1],"f":[4,7,-2,-2,9,-2,-2],"th":[0.3630189970135689,-0.01947501301765442,-2.0,-2.0,0.5649141436442733,-2.0,-2.0],"v":[[0.625,0.375],[0.2,0.8],[0.5,0.5],[0.0,1.0],[0.9285714285714286,0.07142857142857142],[0.75,0.25],[1.0,0.0]]},{"cl":[1,2,-1,-1,-1],"cr":[4,3,-1,-1,-1],"f":[3,7,-2,-2,-2],"th":[0.6358288377523422,-0.7673157155513763,-2.0,-2.0,-2.0],"v":[[0.3333333333333333,0.6666666666666666],[0.11764705882352941,0.8823529411764706],[1.0,0.0],[0.0,1.0],[0.8571428571428571,0.14285714285714285]]},{"cl":[1,2,-1,-1,-1],"cr":[4,3,-1,-1,-1],"f":[7,8,-2,-2,-2],"th":[-0.019475020468235016,0.5773502588272095,-2.0,-2.0,-2.0],"v":[[0.5416666666666666,0.4583333333333333],[0.8125,0.1875],[0.4,0.6],[1.0,0.0],[0.0,1.0]]},{"cl":[1,2,-1,-1,-1],"cr":[4,3,-1,-1,-1],"f":[6,9,-2,-2,-2],"th":[-0.08362418413162231,0.8976243138313293,-2.0,-2.0,-2.0],"v":[[0.5416666666666666,0.4583333333333333],[0.8125,0.1875],[0.5,0.5],[1.0,0.0],[0.0,1.0]]},{"cl":[1,2,-1,-1,-1],"cr":[4,3,-1,-1,-1],"f":[10,7,-2,-2,-2],"th":[0.17960530519485474,-1.7254865765571594,-2.0,-2.0,-2.0],"v":[[0.625,0.375],[0.8823529411764706,0.11764705882352941],[0.3333333333333333,0.6666666666666666],[1.0,0.0],[0.0,1.0]]},{"cl":[1,2,-1,4,-1,-1,-1],"cr":[6,3,-1,5,-1,-1,-1],"f":[11,9,-2,12,-2,-2,-2],"th":[0.13823270797729492,-0.5995714366436005,-2.0,0.6030226647853851,-2.0,-2.0,-2.0],"v":[[0.5833333333333334,0.4166666666666667],[0.375,0.625],[0.0,1.0],[0.5,0.5],[0.0,1.0],[1.0,0.0],[1.0,0.0]]},{"cl":[1,2,-1,-1,5,-1,-1],"cr":[4,3,-1,-1,6,-1,-1],"f":[0,10,-2,-2,2,-2,-2],"th":[0.5280250161886215,0.17960530519485474,-2.0,-2.0,1.0485931038856506,-2.0,-2.0],"v":[[0.5,0.5],[0.09090909090909091,0.9090909090909091],[0.5,0.5],[0.0,1.0],[0.8461538461538461,0.15384615384615385],[1.0,0.0],[0.0,1.0]]},{"cl":[1,2,-1,-1,-1],"cr":[4,3,-1,-1,-1],"f":[7,7,-2,-2,-2],"th":[0.07400507479906082,-0.5336154997348785,-2.0,-2.0,-2.0],"v":[[0.4583333333333333,0.5416666666666666],[0.8461538461538461,0.15384615384615385],[1.0,0.0],[0.6,0.4],[0.0,1.0]]},{"cl":[1,2,3,-1,-1,-1,-1],"cr":[6,5,4,-1,-1,-1,-1],"f":[10,2,12,-2,-2,-2,-2],"th":[0.17960530519485474,0.11651033163070679,0.6030226647853851,-2.0,-2.0,-2.0,-2.0],"v":[[0.4166666666666667,0.5833333333333334],[0.7142857142857143,0.2857142857142857],[0.9090909090909091,0.09090909090909091],[0.8571428571428571,0.14285714285714285],[1.0,0.0],[0.0,1.0],[0.0,1.0]]},{"cl":[1,2,3,-1,-1,-1,-1],"cr":[6,5,4,-1,-1,-1,-1],"f":[6,2,0,-2,-2,-2,-2],"th":[-0.08362418413162231,1.0485931038856506,-0.21121001243591309,-2.0,-2.0,-2.0,-2.0],"v":[[0.5416666666666666,0.4583333333333333],[0.7222222222222222,0.2777777777777778],[0.8666666666666667,0.13333333333333333],[0.6,0.4],[1.0,0.0],[0.0,1.0],[0.0,1.0]]},{"cl":[1,2,3,-1,-1,-1,-1],"cr":[6,5,4,-1,-1,-1,-1],"f":[10,9,9,-2,-2,-2,-2],"th":[0.17960530519485474,1.0223906338214874,0.14902643021196127,-2.0,-2.0,-2.0,-2.0],"v":[[0.3333333333333333,0.6666666666666666],[0.7272727272727273,0.2727272727272727],[0.5,0.5],[1.0,0.0],[0.0,1.0],[1.0,0.0],[0.0,1.0]]},{"cl":[1,-1,3,4,-1,-1,-1],"cr":[2,-1,6,5,-1,-1,-1],"f":[2,-2,10,10,-2,-2,-2],"th":[-0.8155724257230759,-2.0,0.17960530519485474,-1.2572371065616608,-2.0,-2.0,-2.0],"v":[[0.4583333333333333,0.5416666666666666],[1.0,0.0],[0.13333333333333333,0.8666666666666667],[0.4,0.6],[0.0,1.0],[0.6666666666666666,0.3333333333333333],[0.0,1.0]]},{"cl":[1,2,-1,-1,5,-1,-1],"cr":[4,3,-1,-1,6,-1,-1],"f":[3,7,-2,-2,6,-2,-2],"th":[0.7344919443130493,-0.8841658234596252,-2.0,-2.0,-0.08362418413162231,-2.0,-2.0],"v":[[0.4583333333333333,0.5416666666666666],[0.21428571428571427,0.7857142857142857],[1.0,0.0],[0.0,1.0],[0.8,0.2],[1.0,0.0],[0.0,1.0]]},{"cl":[1,2,-1,-1,-1],"cr":[4,3,-1,-1,-1],"f":[7,3,-2,-2,-2],"th":[-0.019475020468235016,-0.35080212354660034,-2.0,-2.0,-2.0],"v":[[0.5833333333333334,0.4166666666666667],[0.875,0.125],[0.0,1.0],[1.0,0.0],[0.0,1.0]]},{"cl":[1,-1,3,-1,-1],"cr":[2,-1,4,-1,-1],"f":[3,-2,7,-2,-2],"th":[-0.35080212354660034,-2.0,0.35444533079862595,-2.0,-2.0],"v":[[0.4583333333333333,0.5416666666666666],[0.0,1.0],[0.8461538461538461,0.15384615384615385],[1.0,0.0],[0.0,1.0]]},{"cl":[1,2,-1,4,-1,-1,-1],"cr":[6,3,-1,5,-1,-1,-1],"f":[11,9,-2,4,-2,-2,-2],"th":[0.13823270797729492,-0.6411602199077606,-2.0,-0.5620487183332443,-2.0,-2.0,-2.0],"v":[[0.3333333333333333,0.6666666666666666],[0.058823529411764705,0.9411764705882353],[0.0,1.0],[0.14285714285714285,0.8571428571428571],[0.5,0.5],[0.0,1.0],[1.0,0.0]]},{"cl":[1,2,-1,-1,5,-1,-1],"cr":[4,3,-1,-1,6,-1,-1],"f":[12,8,-2,-2,6,-2,-2],"th":[0.6030226647853851,0.5773502588272095,-2.0,-2.0,-0.08362418413162231,-2.0,-2.0],"v":[[0.3333333333333333,0.6666666666666666],[0.07142857142857142,0.9285714285714286],[0.0,1.0],[0.5,0.5],[0.7,0.3],[1.0,0.0],[0.0,1.0]]},{"cl":[1,2,-1,-1,-1],"cr":[4,3,-1,-1,-1],"f":[6,9,-2,-2,-2],"th":[-0.08362418413162231,-0.017328654415905476,-2.0,-2.0,-2.0],"v":[[0.5416666666666666,0.4583333333333333],[0.8125,0.1875],[0.4,0.6],[1.0,0.0],[0.0,1.0]]},{"cl":[1,2,-1,-1,5,6,-1,-1,-1],"cr":[4,3,-1,-1,8,7,-1,-1,-1],"f":[0,9,-2,-2,9,7,-2,-2,-2],"th":[0.5808274894952774,0.02426011487841606,-2.0,-2.0,1.3551007807254791,-1.281456172466278,-2.0,-2.0,-2.0],"v":[[0.375,0.625],[0.13333333333333333,0.8666666666666667],[0.0,1.0],[0.6666666666666666,0.3333333333333333],[0.7777777777777778,0.2222222222222222],[0.6,0.4],[0.6666666666666666,0.3333333333333333],[0.5,0.5],[1.0,0.0]]},{"cl":[1,-1,3,4,-1,-1,-1],"cr":[2,-1,6,5,-1,-1,-1],"f":[2,-2,10,7,-2,-2,-2],"th":[-0.8155724257230759,-2.0,0.17960530519485474,-0.11295510828495026,-2.0,-2.0,-2.0],"v":[[0.375,0.625],[1.0,0.0],[0.0625,0.9375],[0.25,0.75],[0.5,0.5],[0.0,1.0],[0.0,1.0]]}]};
 
-    function loadPreset(key) {
-      const data = PRESETS[key];
-      if (!data) return;
-      for (const [k, v] of Object.entries(data)) {
-        const el = document.getElementById(k);
-        if (el) el.value = v;
-      }
-      document.getElementById('submitBtn').click();
-    }
+/* ---------- tabs ---------- */
+document.querySelectorAll('.tabbtn').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.tabbtn').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  ['predictor','eda','evaluation','source','viva'].forEach(t => {
+    document.getElementById('tab-' + t).classList.toggle('hidden', t !== b.dataset.tab);
+  });
+  history.replaceState(null, '', '#' + b.dataset.tab);
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}));
+/* deep-link support: /#eda opens the EDA tab */
+(function () {
+  const want = (location.hash || '').replace('#', '');
+  const btn = want && document.querySelector('.tabbtn[data-tab="' + want + '"]');
+  if (btn) btn.click();
+})();
 
-    // ---------------------------------------------------------------------
-    // Static build: the Random Forest + StandardScaler are loaded from
-    // model.json and evaluated locally in JavaScript. No server involved.
-    // ---------------------------------------------------------------------
-    let MODEL = null;
+/* ---------- inference (identical maths to sklearn) ---------- */
+function predictProbability(p) {
+  const x = MODEL.features.map((f, i) => (p[f] - MODEL.scaler.mean[i]) / MODEL.scaler.scale[i]);
+  let total = 0;
+  for (const t of MODEL.trees) {
+    let n = 0;
+    while (t.cl[n] !== -1) { n = (x[t.f[n]] <= t.th[n]) ? t.cl[n] : t.cr[n]; }
+    const v = t.v[n];
+    total += v[1] / (v[0] + v[1]);
+  }
+  return total / MODEL.trees.length;
+}
 
-    async function loadModel() {
-      const res = await fetch('model.json');
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      MODEL = await res.json();
-      renderMetrics(MODEL.metrics);
-      const btn = document.getElementById('submitBtn');
-      btn.disabled = false;
-      btn.innerHTML = '<span>Run Model Prediction</span><span class="text-xs px-2 py-0.5 rounded bg-white/20 font-mono">in-browser</span>';
-      document.getElementById('modelStatus').innerText = 'Model: Random Forest (' + MODEL.trees.length + ' trees)';
-    }
+function currentValues() {
+  const out = {};
+  new FormData(document.getElementById('predictionForm')).forEach((v, k) => { out[k] = parseFloat(v); });
+  return out;
+}
 
-    function renderMetrics(m) {
-      if (!m) return;
-      const pct = v => (v * 100).toFixed(1) + '%';
-      document.getElementById('mAcc').innerText = pct(m.accuracy);
-      document.getElementById('mPrec').innerText = pct(m.precision);
-      document.getElementById('mRec').innerText = pct(m.recall);
-      document.getElementById('mF1').innerText = pct(m.f1_score);
-      document.getElementById('mAuc').innerText = m.roc_auc.toFixed(3);
-    }
+function recommendations(p) {
+  const recs = [];
+  if (p.trestbps >= 140) recs.push('Resting blood pressure is at or above 140 mm Hg (Stage 2 hypertension range). Advise clinical review.');
+  if (p.chol >= 240) recs.push('Serum cholesterol is elevated above 240 mg/dl. Recommend a full lipid panel.');
+  if (p.exang === 1) recs.push('Exercise-induced angina reported. Consider a stress echocardiogram.');
+  if (p.thalach < 120) recs.push('Maximum heart rate achieved during stress is low, which is often associated with reduced cardiac reserve.');
+  if (p.oldpeak >= 2) recs.push('ST depression of ' + p.oldpeak + ' mm is a notable ischaemic marker.');
+  if (!recs.length) recs.push('Cardiovascular metrics sit within acceptable baseline ranges. Maintain an active routine and routine screening.');
+  return recs;
+}
 
-    // Mirrors sklearn's StandardScaler.transform + RandomForestClassifier.predict_proba
-    function predictProbability(payload) {
-      const x = MODEL.features.map((f, i) => (payload[f] - MODEL.scaler.mean[i]) / MODEL.scaler.scale[i]);
-      let total = 0;
-      for (const tree of MODEL.trees) {
-        let node = 0;
-        while (tree.cl[node] !== -1) {
-          node = (x[tree.f[node]] <= tree.th[node]) ? tree.cl[node] : tree.cr[node];
-        }
-        const v = tree.v[node];
-        total += v[1] / (v[0] + v[1]);
-      }
-      return total / MODEL.trees.length;
-    }
+function contributions(p) {
+  const x = MODEL.features.map((f, i) => (p[f] - MODEL.scaler.mean[i]) / MODEL.scaler.scale[i]);
+  return MODEL.features
+    .map((f, i) => ({ f, v: ART.importances[f] * x[i] }))
+    .sort((a, b) => Math.abs(b.v) - Math.abs(a.v)).slice(0, 5);
+}
 
-    function buildRecommendations(p) {
-      const recs = [];
-      if (p.trestbps >= 140) recs.push('Resting blood pressure indicates Stage 2 hypertension. Advise medical review.');
-      if (p.chol >= 240) recs.push('Serum cholesterol is elevated (>240 mg/dl). Recommend full lipid panel.');
-      if (p.exang === 1) recs.push('Exercise angina reported. Recommend stress echocardiogram.');
-      if (recs.length === 0) recs.push('Cardiovascular metrics are within acceptable baseline ranges. Maintain active routine.');
-      return recs;
-    }
+function handlePredict(e) {
+  e.preventDefault();
+  const p = currentValues();
+  const prob = predictProbability(p);
+  render(p, prob);
+}
 
-    function handlePredict(e) {
-      e.preventDefault();
-      if (!MODEL) return;
-      const payload = {};
-      new FormData(document.getElementById('predictionForm')).forEach((value, key) => {
-        payload[key] = parseFloat(value);
-      });
+function render(p, prob) {
+  const pct = Math.round(prob * 1000) / 10;
+  const risky = prob >= 0.5;
+  const tier = pct >= 65 ? 'High' : (pct >= 30 ? 'Moderate' : 'Low');
+  const badge = document.getElementById('riskBadge');
+  const icon = document.getElementById('riskIcon');
+  const bar = document.getElementById('probBar');
 
-      const prob = predictProbability(payload);
-      const pct = Math.round(prob * 1000) / 10;
-      updateResultUI({
-        prediction: prob >= 0.5 ? 1 : 0,
-        probability: prob,
-        risk_percentage: pct,
-        risk_tier: pct >= 65 ? 'High' : (pct >= 30 ? 'Moderate' : 'Low'),
-        recommendations: buildRecommendations(payload)
-      });
-    }
+  badge.className = 'text-[11px] font-semibold px-2.5 py-1 rounded-full border ' +
+    (risky ? 'border-rose-500/40 bg-rose-500/10 text-rose-300' : 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300');
+  badge.textContent = (risky ? 'High risk' : 'Low risk') + ' (' + tier + ')';
+  icon.className = 'w-14 h-14 mx-auto rounded-2xl flex items-center justify-center text-2xl font-bold mb-3 ' +
+    (risky ? 'bg-rose-500/15 text-rose-400' : 'bg-emerald-500/15 text-emerald-400');
+  icon.textContent = risky ? '!' : '\u2713';
+  document.getElementById('resultTitle').textContent = risky ? 'Elevated cardiovascular risk' : 'Low risk / healthy profile';
+  document.getElementById('resultSubtitle').textContent = 'Random Forest \u00b7 ' + MODEL.trees.length + ' trees \u00b7 decision threshold 50%';
+  document.getElementById('probText').textContent = pct + '%';
+  document.getElementById('probText').className = 'font-bold font-mono text-sm ' + (risky ? 'text-rose-300' : 'text-emerald-300');
+  bar.className = 'h-full rounded-full transition-all duration-700 ' + (risky ? 'bg-rose-500' : 'bg-emerald-500');
+  bar.style.width = Math.max(2, Math.min(100, pct)) + '%';
 
-    function updateResultUI(data) {
-      const isRisk = data.prediction === 1;
-      const pct = data.risk_percentage;
-      document.getElementById('probText').innerText = pct + '%';
-      document.getElementById('probBar').style.width = Math.min(100, Math.max(5, pct)) + '%';
-      const badge = document.getElementById('riskBadge');
-      const icon = document.getElementById('riskGaugeIcon');
-      const title = document.getElementById('resultTitle');
-      const probBar = document.getElementById('probBar');
-      const recList = document.getElementById('recommendationsList');
+  const c = contributions(p);
+  const cmax = Math.max(...c.map(o => Math.abs(o.v))) || 1;
+  document.getElementById('contribList').innerHTML = c.map(o => {
+    const up = o.v > 0;
+    return '<div class="flex items-center gap-2">' +
+      '<span class="w-16 font-mono text-[10px] text-slate-400">' + o.f + '</span>' +
+      '<div class="flex-1 h-2 bg-slate-800/70 rounded overflow-hidden flex justify-center">' +
+      '<div class="h-full rounded ' + (up ? 'bg-rose-500/80' : 'bg-sky-500/80') + '" style="width:' + (Math.abs(o.v) / cmax * 50) + '%; margin-left:' + (up ? '50%' : (50 - Math.abs(o.v) / cmax * 50)) + '%"></div>' +
+      '</div><span class="w-10 text-right font-mono text-[10px] ' + (up ? 'text-rose-400' : 'text-sky-400') + '">' + (up ? '+' : '') + o.v.toFixed(2) + '</span></div>';
+  }).join('');
 
-      if (isRisk) {
-        badge.className = 'text-xs font-semibold px-2.5 py-1 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20';
-        badge.innerText = 'High Risk (' + data.risk_tier + ')';
-        icon.className = 'w-16 h-16 mx-auto rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center text-3xl font-bold mb-3 shadow-inner';
-        icon.innerText = '!';
-        title.innerText = 'High Risk of Heart Disease';
-        probBar.className = 'bg-rose-500 h-full rounded-full transition-all duration-700 ease-out';
-      } else {
-        badge.className = 'text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
-        badge.innerText = 'Low Risk (' + data.risk_tier + ')';
-        icon.className = 'w-16 h-16 mx-auto rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-3xl font-bold mb-3 shadow-inner';
-        icon.innerText = '✓';
-        title.innerText = 'Low Risk / Healthy Profile';
-        probBar.className = 'bg-emerald-500 h-full rounded-full transition-all duration-700 ease-out';
-      }
+  document.getElementById('recList').innerHTML = recommendations(p).map(r =>
+    '<li class="flex gap-2 p-2.5 rounded-lg bg-slate-900/60 border border-slate-800"><span class="' +
+    (risky ? 'text-rose-400' : 'text-emerald-400') + '">&bull;</span><span>' + r + '</span></li>').join('');
+}
 
-      recList.innerHTML = '';
-      (data.recommendations || []).forEach(rec => {
-        const li = document.createElement('li');
-        li.className = 'flex items-start gap-2 bg-slate-900/40 p-2.5 rounded-lg border border-slate-800';
-        li.innerHTML = '<span class="' + (isRisk ? 'text-rose-400' : 'text-emerald-400') + ' font-bold">•</span><span>' + rec + '</span>';
-        recList.appendChild(li);
-      });
-    }
-    loadModel().catch(err => {
-      console.error('Failed to load model.json', err);
-      document.getElementById('modelStatus').innerText = 'Model failed to load';
-      const btn = document.getElementById('submitBtn');
-      btn.disabled = false;
-      btn.innerText = 'Model unavailable';
-    });
-  </script>
+/* ---------- presets ---------- */
+const PRESETS = {
+  healthy:   { age:32, sex:0, cp:1, trestbps:110, chol:175, fbs:0, restecg:0, thalach:182, exang:0, oldpeak:0.1, slope:2, ca:0, thal:1 },
+  borderline:{ age:55, sex:1, cp:1, trestbps:135, chol:245, fbs:0, restecg:1, thalach:148, exang:0, oldpeak:1.1, slope:1, ca:1, thal:2 },
+  highrisk:  { age:67, sex:1, cp:3, trestbps:160, chol:286, fbs:1, restecg:2, thalach:108, exang:1, oldpeak:3.2, slope:1, ca:2, thal:3 }
+};
+function loadPreset(k) {
+  const d = PRESETS[k]; if (!d) return;
+  for (const [f, v] of Object.entries(d)) {
+    const el = document.getElementById(f); if (!el) continue;
+    el.value = v;
+    const out = document.getElementById(f + 'Out'); if (out) out.textContent = v;
+  }
+  handlePredict(new Event('submit'));
+}
+
+/* ---------- batch ---------- */
+function fillSampleBatch() {
+  const rows = [PRESETS.healthy, PRESETS.borderline, PRESETS.highrisk];
+  document.getElementById('batchInput').value =
+    rows.map(r => MODEL.features.map(f => r[f]).join(',')).join('\n');
+}
+function runBatch() {
+  const txt = document.getElementById('batchInput').value.trim();
+  if (!txt) return;
+  const lines = txt.split(/\r?\n/).filter(l => l.trim());
+  if (lines[0].toLowerCase().includes('age')) lines.shift();
+  const out = lines.map((line, i) => {
+    const vals = line.split(',').map(Number);
+    if (vals.length < MODEL.features.length) return null;
+    const p = {}; MODEL.features.forEach((f, j) => p[f] = vals[j]);
+    const prob = predictProbability(p);
+    return '<tr class="border-b border-slate-800/50"><td class="py-1.5 pr-3 text-slate-500 font-mono">' + (i + 1) + '</td>' +
+      '<td class="py-1.5 pr-3 font-mono text-slate-300">' + vals[0] + '</td>' +
+      '<td class="py-1.5 pr-3 font-mono ' + (prob >= .5 ? 'text-rose-300' : 'text-emerald-300') + '">' + (prob * 100).toFixed(1) + '%</td>' +
+      '<td class="py-1.5 text-[10px] ' + (prob >= .5 ? 'text-rose-400' : 'text-emerald-400') + '">' + (prob >= .5 ? 'high risk' : 'low risk') + '</td></tr>';
+  }).filter(Boolean);
+  document.getElementById('batchResult').innerHTML =
+    '<table class="w-full text-[11px]"><thead><tr class="text-[9px] uppercase tracking-wider text-slate-500 border-b border-slate-800">' +
+    '<th class="text-left py-1.5 pr-3">row</th><th class="text-left py-1.5 pr-3">age</th><th class="text-left py-1.5 pr-3">probability</th><th class="text-left py-1.5">label</th></tr></thead><tbody>' +
+    out.join('') + '</tbody></table>';
+}
+
+/* ---------- source viewer ---------- */
+function showFile(name) {
+  document.getElementById('codeName').textContent = name;
+  document.getElementById('codeBody').textContent = CODE[name] || 'File not bundled.';
+  document.querySelectorAll('.filebtn').forEach(b => {
+    b.classList.toggle('bg-slate-800/70', b.dataset.file === name);
+    b.classList.toggle('text-slate-200', b.dataset.file === name);
+  });
+}
+function copyCode() {
+  navigator.clipboard.writeText(document.getElementById('codeBody').textContent);
+}
+
+/* ---------- viva search ---------- */
+function filterViva(q) {
+  const t = q.toLowerCase();
+  document.querySelectorAll('#vivaList details').forEach(d => {
+    d.style.display = d.textContent.toLowerCase().includes(t) ? '' : 'none';
+  });
+}
+
+/* ---------- boot ---------- */
+document.getElementById('modelStatus').innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>Random Forest \u00b7 ' + MODEL.trees.length + ' trees';
+const btn = document.getElementById('submitBtn');
+btn.disabled = false;
+document.getElementById('submitLabel').textContent = 'Run Model Prediction';
+showFile('app.py');
+</script>
 </body>
 </html>
