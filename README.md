@@ -74,5 +74,11 @@ python train_model.py          # produces heart_disease_model.pkl
 python export_model_json.py    # writes docs/model.json from the .pkl
 ```
 
+The published site is a single-page app with five tabs — **Live Predictor**, **Kaggle Dataset & EDA**,
+**Model Evaluation**, **Source Code & Files** and **College Viva Guide**. EDA figures, the confusion
+matrix, the ROC curve and the feature-importance chart are all generated from `dataset.csv` and the
+trained model, so they stay in sync after a retrain. Styling is compiled Tailwind (`docs/tailwind.css`),
+so the page has no runtime CDN dependency.
+
 The Flask version in `app.py` is unchanged and remains the reference implementation for
 local use, viva demonstrations and the `POST /predict` + `GET /metrics` API.
