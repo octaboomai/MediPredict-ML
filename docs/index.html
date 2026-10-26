@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MediPredict ML - Heart Disease Prediction System</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    code, pre { font-family: 'JetBrains Mono', monospace; }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen antialiased selection:bg-indigo-500 selection:text-white">
+
+  <!-- Top Header Navigation -->
+  <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-rose-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-rose-500/20 text-white font-bold text-xl">
+          ♥
+        </div>
+        <div>
+          <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+            MediPredict ML
+            <span class="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">Static &middot; In-Browser ML</span>
+          </h1>
+          <p class="text-xs text-slate-400">College Mini Project &bull; Kaggle Heart Disease Dataset &bull; Scikit-Learn &bull; GitHub Pages</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-3 text-xs">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-300">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span id="modelStatus">Model: Random Forest (.json)</span>
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+    <div class="bg-gradient-to-r from-slate-800/80 via-indigo-950/40 to-slate-800/80 border border-slate-700/60 rounded-2xl p-6 mb-8 relative overflow-hidden shadow-xl">
+      <div class="relative z-10 max-w-3xl">
+        <div class="inline-block text-xs font-semibold uppercase tracking-wider text-indigo-400 mb-2">Machine Learning College Demonstration</div>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Clinical Heart Disease Risk Assessment System</h2>
+        <p class="mt-2 text-sm text-slate-300 leading-relaxed">
+          This is the static GitHub Pages build of the project. The trained Random Forest (100 trees, max depth 6) and its StandardScaler have been exported to JSON and are evaluated entirely inside your browser &mdash; no server and no API calls. Enter the 13 clinical indicators below or load a preset clinical profile to see the model&rsquo;s estimate in real time.
+        </p>
+
+        <!-- Quick Sample Presets -->
+        <div class="mt-5 flex flex-wrap items-center gap-2 pt-4 border-t border-slate-700/50">
+          <span class="text-xs text-slate-400 font-medium mr-1">Quick Test Presets:</span>
+          <button type="button" onclick="loadPreset('healthy')" class="px-3 py-1 rounded-lg text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20 transition cursor-pointer">
+            ✓ Healthy Profile (Low Risk)
+          </button>
+          <button type="button" onclick="loadPreset('borderline')" class="px-3 py-1 rounded-lg text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/30 hover:bg-amber-500/20 transition cursor-pointer">
+            ⚠ Borderline Senior
+          </button>
+          <button type="button" onclick="loadPreset('highrisk')" class="px-3 py-1 rounded-lg text-xs font-medium bg-rose-500/10 text-rose-400 border border-rose-500/30 hover:bg-rose-500/20 transition cursor-pointer">
+            ✕ High Risk Cardiac Patient
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hold-out metrics (from model.json) -->
+    <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-8">
+      <div class="bg-slate-800/60 border border-slate-700 rounded-xl p-3 text-center">
+        <div class="text-[10px] uppercase tracking-wider text-slate-400 mb-1">Accuracy</div>
+        <div id="mAcc" class="text-lg font-bold text-indigo-400 font-mono">&mdash;</div>
+      </div>
+      <div class="bg-slate-800/60 border border-slate-700 rounded-xl p-3 text-center">
+        <div class="text-[10px] uppercase tracking-wider text-slate-400 mb-1">Precision</div>
+        <div id="mPrec" class="text-lg font-bold text-indigo-400 font-mono">&mdash;</div>
+      </div>
+      <div class="bg-slate-800/60 border border-slate-700 rounded-xl p-3 text-center">
+        <div class="text-[10px] uppercase tracking-wider text-slate-400 mb-1">Recall</div>
+        <div id="mRec" class="text-lg font-bold text-indigo-400 font-mono">&mdash;</div>
+      </div>
+      <div class="bg-slate-800/60 border border-slate-700 rounded-xl p-3 text-center">
+        <div class="text-[10px] uppercase tracking-wider text-slate-400 mb-1">F1-Score</div>
+        <div id="mF1" class="text-lg font-bold text-indigo-400 font-mono">&mdash;</div>
+      </div>
+      <div class="bg-slate-800/60 border border-slate-700 rounded-xl p-3 text-center">
+        <div class="text-[10px] uppercase tracking-wider text-slate-400 mb-1">ROC-AUC</div>
+        <div id="mAuc" class="text-lg font-bold text-indigo-400 font-mono">&mdash;</div>
+      </div>
+    </div>
+    <p class="text-[11px] text-slate-500 -mt-5 mb-8">Hold-out metrics from the 20% stratified test split of <code class="text-slate-400">dataset.csv</code> (29 records &mdash; a small sample, so these scores are optimistic). Educational demonstration only &mdash; not a clinical device.</p>
+
+    <!-- 2-Column Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <!-- Input Form -->
+      <div class="lg:col-span-7 space-y-6">
+        <div class="bg-slate-800/60 border border-slate-700 rounded-2xl p-6 shadow-xl backdrop-blur">
+          <div class="flex items-center justify-between pb-4 mb-6 border-b border-slate-700">
+            <div>
+              <h3 class="text-lg font-bold text-white">Patient Clinical Parameters</h3>
+              <p class="text-xs text-slate-400">13 standard Cleveland Kaggle dataset diagnostic features</p>
+            </div>
+            <button type="button" onclick="loadPreset('borderline')" class="text-xs text-slate-400 hover:text-white underline cursor-pointer">
+              Reset Values
+            </button>
+          </div>
+
+          <form id="predictionForm" onsubmit="handlePredict(event)" class="space-y-5">
+            <div class="text-xs font-bold uppercase tracking-wider text-indigo-400 flex items-center gap-2">
+              <span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span> 1. Demographics & Symptoms
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1" for="age">Age (Years)</label>
+                <input type="number" id="age" name="age" min="18" max="100" value="54" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-indigo-500">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1" for="sex">Gender</label>
+                <select id="sex" name="sex" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-indigo-500">
+                  <option value="1">Male</option>
+                  <option value="0">Female</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1" for="cp">Chest Pain Type</label>
+                <select id="cp" name="cp" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-indigo-500">
+                  <option value="0">0: Typical Angina</option>
+                  <option value="1" selected>1: Atypical Angina</option>
+                  <option value="2">2: Non-Anginal Pain</option>
+                  <option value="3">3: Asymptomatic</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="text-xs font-bold uppercase tracking-wider text-indigo-400 flex items-center gap-2 pt-2">
+              <span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span> 2. Hemodynamics & Blood Chemistry
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1" for="trestbps">Resting BP (mm Hg)</label>
+                <input type="number" id="trestbps" name="trestbps" min="80" max="220" value="130" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-indigo-500">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1" for="chol">Cholesterol (mg/dl)</label>
+                <input type="number" id="chol" name="chol" min="100" max="600" value="240" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-indigo-500">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1" for="fbs">Fasting Glucose > 120</label>
+                <select id="fbs" name="fbs" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-indigo-500">
+                  <option value="0" selected>False (<= 120 mg/dl)</option>
+                  <option value="1">True (> 120 mg/dl)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="text-xs font-bold uppercase tracking-wider text-indigo-400 flex items-center gap-2 pt-2">
+              <span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span> 3. Stress Test & Cardiac Diagnostics
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1" for="thalach">Max Heart Rate (bpm)</label>
+                <input type="number" id="thalach" name="thalach" min="60" max="220" value="150" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-indigo-500">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1" for="exang">Exercise Angina?</label>
+                <select id="exang" name="exang" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-indigo-500">
+                  <option value="0" selected>No</option>
+                  <option value="1">Yes</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1" for="oldpeak">ST Depression (mm)</label>
+                <input type="number" step="0.1" id="oldpeak" name="oldpeak" min="0.0" max="8.0" value="1.0" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-indigo-500">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1" for="restecg">Resting ECG</label>
+                <select id="restecg" name="restecg" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-indigo-500">
+                  <option value="0" selected>0: Normal</option>
+                  <option value="1">1: ST-T Wave</option>
+                  <option value="2">2: Hypertrophy</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1" for="slope">ST Slope</label>
+                <select id="slope" name="slope" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-indigo-500">
+                  <option value="0">0: Upsloping</option>
+                  <option value="1" selected>1: Flat</option>
+                  <option value="2">2: Downsloping</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1" for="ca">Major Vessels (ca)</label>
+                <select id="ca" name="ca" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-indigo-500">
+                  <option value="0" selected>0 Vessels</option>
+                  <option value="1">1 Vessel</option>
+                  <option value="2">2 Vessels</option>
+                  <option value="3">3 Vessels</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1" for="thal">Thallium Test</label>
+                <select id="thal" name="thal" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-indigo-500">
+                  <option value="1">1: Normal</option>
+                  <option value="2" selected>2: Fixed</option>
+                  <option value="3">3: Reversible</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="pt-4">
+              <button type="submit" id="submitBtn" disabled class="w-full py-3.5 px-4 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-semibold rounded-xl shadow-lg shadow-indigo-600/30 transition flex items-center justify-center gap-2 cursor-pointer">
+                <span>Run Local Model Prediction</span>
+                <span class="text-xs px-2 py-0.5 rounded bg-white/20 font-mono">in-browser</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Right Column: Prediction Output -->
+      <div class="lg:col-span-5 space-y-6">
+        <div id="resultCard" class="bg-slate-800/60 border border-slate-700 rounded-2xl p-6 shadow-xl backdrop-blur relative">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-700/80 mb-4">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Inference Result</span>
+            <span id="riskBadge" class="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              Low Risk
+            </span>
+          </div>
+
+          <div class="text-center py-4">
+            <div id="riskGaugeIcon" class="w-16 h-16 mx-auto rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-3xl font-bold mb-3 shadow-inner">
+              ✓
+            </div>
+            <h4 id="resultTitle" class="text-xl font-extrabold text-white">Low Risk / Healthy Profile</h4>
+            <p id="resultSubtitle" class="text-xs text-slate-400 mt-1">Random Forest &bull; 100 trees &bull; computed in your browser</p>
+          </div>
+
+          <div class="mt-4 p-4 rounded-xl bg-slate-900/80 border border-slate-700/60">
+            <div class="flex items-center justify-between text-xs mb-1.5">
+              <span class="font-medium text-slate-300">Heart Disease Probability:</span>
+              <span id="probText" class="font-bold text-emerald-400 font-mono text-sm">18.4%</span>
+            </div>
+            <div class="w-full bg-slate-800 rounded-full h-3 overflow-hidden p-0.5 border border-slate-700">
+              <div id="probBar" class="bg-emerald-500 h-full rounded-full transition-all duration-700 ease-out" style="width: 18.4%"></div>
+            </div>
+            <div class="flex justify-between text-[10px] text-slate-500 mt-1">
+              <span>0% (Healthy)</span>
+              <span>Threshold: 50%</span>
+              <span>100% (High Risk)</span>
+            </div>
+          </div>
+
+          <div class="mt-5">
+            <h5 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Automated Clinical Insights:</h5>
+            <ul id="recommendationsList" class="space-y-2 text-xs text-slate-300">
+              <li class="flex items-start gap-2 bg-slate-900/40 p-2.5 rounded-lg border border-slate-800">
+                <span class="text-emerald-400 font-bold">✓</span>
+                <span>Resting hemodynamics and cardiac parameters are within optimal standard tolerances.</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    <footer class="max-w-6xl mx-auto px-4 sm:px-6 pb-10 pt-2 text-center text-[11px] text-slate-500">
+    <p>Static build for GitHub Pages &mdash; the Random Forest runs client-side in JavaScript.
+    The original Flask app (<code class="text-slate-400">app.py</code>) still runs locally with <code class="text-slate-400">python app.py</code>.</p>
+    <p class="mt-1"><a href="https://github.com/octaboomai/MediPredict-ML" class="text-indigo-400 hover:underline">View source on GitHub</a></p>
+  </footer>
+</main>
+
+  <script>
+    const PRESETS = {
+      healthy: { age: 32, sex: 0, cp: 1, trestbps: 110, chol: 175, fbs: 0, restecg: 0, thalach: 182, exang: 0, oldpeak: 0.1, slope: 2, ca: 0, thal: 1 },
+      borderline: { age: 55, sex: 1, cp: 1, trestbps: 135, chol: 245, fbs: 0, restecg: 1, thalach: 148, exang: 0, oldpeak: 1.1, slope: 1, ca: 1, thal: 2 },
+      highrisk: { age: 67, sex: 1, cp: 3, trestbps: 160, chol: 286, fbs: 1, restecg: 2, thalach: 108, exang: 1, oldpeak: 3.2, slope: 1, ca: 2, thal: 3 }
+    };
+
+    function loadPreset(key) {
+      const data = PRESETS[key];
+      if (!data) return;
+      for (const [k, v] of Object.entries(data)) {
+        const el = document.getElementById(k);
+        if (el) el.value = v;
+      }
+      document.getElementById('submitBtn').click();
+    }
+
+    // ---------------------------------------------------------------------
+    // Static build: the Random Forest + StandardScaler are loaded from
+    // model.json and evaluated locally in JavaScript. No server involved.
+    // ---------------------------------------------------------------------
+    let MODEL = null;
+
+    async function loadModel() {
+      const res = await fetch('model.json');
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      MODEL = await res.json();
+      renderMetrics(MODEL.metrics);
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = false;
+      btn.innerHTML = '<span>Run Model Prediction</span><span class="text-xs px-2 py-0.5 rounded bg-white/20 font-mono">in-browser</span>';
+      document.getElementById('modelStatus').innerText = 'Model: Random Forest (' + MODEL.trees.length + ' trees)';
+    }
+
+    function renderMetrics(m) {
+      if (!m) return;
+      const pct = v => (v * 100).toFixed(1) + '%';
+      document.getElementById('mAcc').innerText = pct(m.accuracy);
+      document.getElementById('mPrec').innerText = pct(m.precision);
+      document.getElementById('mRec').innerText = pct(m.recall);
+      document.getElementById('mF1').innerText = pct(m.f1_score);
+      document.getElementById('mAuc').innerText = m.roc_auc.toFixed(3);
+    }
+
+    // Mirrors sklearn's StandardScaler.transform + RandomForestClassifier.predict_proba
+    function predictProbability(payload) {
+      const x = MODEL.features.map((f, i) => (payload[f] - MODEL.scaler.mean[i]) / MODEL.scaler.scale[i]);
+      let total = 0;
+      for (const tree of MODEL.trees) {
+        let node = 0;
+        while (tree.cl[node] !== -1) {
+          node = (x[tree.f[node]] <= tree.th[node]) ? tree.cl[node] : tree.cr[node];
+        }
+        const v = tree.v[node];
+        total += v[1] / (v[0] + v[1]);
+      }
+      return total / MODEL.trees.length;
+    }
+
+    function buildRecommendations(p) {
+      const recs = [];
+      if (p.trestbps >= 140) recs.push('Resting blood pressure indicates Stage 2 hypertension. Advise medical review.');
+      if (p.chol >= 240) recs.push('Serum cholesterol is elevated (>240 mg/dl). Recommend full lipid panel.');
+      if (p.exang === 1) recs.push('Exercise angina reported. Recommend stress echocardiogram.');
+      if (recs.length === 0) recs.push('Cardiovascular metrics are within acceptable baseline ranges. Maintain active routine.');
+      return recs;
+    }
+
+    function handlePredict(e) {
+      e.preventDefault();
+      if (!MODEL) return;
+      const payload = {};
+      new FormData(document.getElementById('predictionForm')).forEach((value, key) => {
+        payload[key] = parseFloat(value);
+      });
+
+      const prob = predictProbability(payload);
+      const pct = Math.round(prob * 1000) / 10;
+      updateResultUI({
+        prediction: prob >= 0.5 ? 1 : 0,
+        probability: prob,
+        risk_percentage: pct,
+        risk_tier: pct >= 65 ? 'High' : (pct >= 30 ? 'Moderate' : 'Low'),
+        recommendations: buildRecommendations(payload)
+      });
+    }
+
+    function updateResultUI(data) {
+      const isRisk = data.prediction === 1;
+      const pct = data.risk_percentage;
+      document.getElementById('probText').innerText = pct + '%';
+      document.getElementById('probBar').style.width = Math.min(100, Math.max(5, pct)) + '%';
+      const badge = document.getElementById('riskBadge');
+      const icon = document.getElementById('riskGaugeIcon');
+      const title = document.getElementById('resultTitle');
+      const probBar = document.getElementById('probBar');
+      const recList = document.getElementById('recommendationsList');
+
+      if (isRisk) {
+        badge.className = 'text-xs font-semibold px-2.5 py-1 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20';
+        badge.innerText = 'High Risk (' + data.risk_tier + ')';
+        icon.className = 'w-16 h-16 mx-auto rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center text-3xl font-bold mb-3 shadow-inner';
+        icon.innerText = '!';
+        title.innerText = 'High Risk of Heart Disease';
+        probBar.className = 'bg-rose-500 h-full rounded-full transition-all duration-700 ease-out';
+      } else {
+        badge.className = 'text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
+        badge.innerText = 'Low Risk (' + data.risk_tier + ')';
+        icon.className = 'w-16 h-16 mx-auto rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-3xl font-bold mb-3 shadow-inner';
+        icon.innerText = '✓';
+        title.innerText = 'Low Risk / Healthy Profile';
+        probBar.className = 'bg-emerald-500 h-full rounded-full transition-all duration-700 ease-out';
+      }
+
+      recList.innerHTML = '';
+      (data.recommendations || []).forEach(rec => {
+        const li = document.createElement('li');
+        li.className = 'flex items-start gap-2 bg-slate-900/40 p-2.5 rounded-lg border border-slate-800';
+        li.innerHTML = '<span class="' + (isRisk ? 'text-rose-400' : 'text-emerald-400') + ' font-bold">•</span><span>' + rec + '</span>';
+        recList.appendChild(li);
+      });
+    }
+  </script>
+</body>
+</html>
