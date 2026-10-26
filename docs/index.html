@@ -394,6 +394,13 @@
         recList.appendChild(li);
       });
     }
+    loadModel().catch(err => {
+      console.error('Failed to load model.json', err);
+      document.getElementById('modelStatus').innerText = 'Model failed to load';
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = false;
+      btn.innerText = 'Model unavailable';
+    });
   </script>
 </body>
 </html>
