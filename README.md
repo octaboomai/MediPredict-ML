@@ -52,3 +52,27 @@ python train_model.py
 python app.py
 ```
 Visit http://127.0.0.1:5000 in your browser!
+
+---
+
+## 7. Live Demo (GitHub Pages)
+
+A static build of the app is published from the `docs/` folder:
+
+**https://octaboomai.github.io/MediPredict-ML/**
+
+GitHub Pages can only serve static files, so this build has no Flask backend. Instead,
+`train_model.py`'s trained Random Forest (100 trees, max depth 6) and its `StandardScaler`
+are exported to `docs/model.json`, and the tree traversal is re-implemented in JavaScript so
+predictions run entirely in the visitor's browser. It uses the same UI, presets, thresholds
+and recommendation logic as the Flask app.
+
+To regenerate the static build after retraining the model:
+
+```bash
+python train_model.py          # produces heart_disease_model.pkl
+python export_model_json.py    # writes docs/model.json from the .pkl
+```
+
+The Flask version in `app.py` is unchanged and remains the reference implementation for
+local use, viva demonstrations and the `POST /predict` + `GET /metrics` API.
